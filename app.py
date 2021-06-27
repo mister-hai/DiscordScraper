@@ -59,10 +59,11 @@ from src.database import table_exists
 ################################################################################
 # Variables
 ################################################################################
+fileextensionfilter = [".jpg",".png",".gif"]
 listofpandascolumns = ['channel', 'sender', 'time', 'content','file']
 discord_bot_token   = "NzE0NjA3NTAyOTg1MDAzMDgw.XxV-HQ.mn5f97TDYXtuFVgTwUccfsW4Guk"
 COMMAND_PREFIX      = "."
-bot_help_message = "I AM"
+bot_help_message    = "I AM"
 BOT_PERMISSIONS     = 3072
 devs                = [712737412018733076]
 #cog_directory_files = os.listdir("./things_it_does/cogs")
@@ -104,6 +105,12 @@ parser.add_argument('--imagesaveformat',
                                  action  = "store" ,
                                  default = ".png", 
                                  help    = "File extension for images" )
+parser.add_argument('--auth-token',
+                                 dest    = 'token',
+                                 action  = "store" ,
+                                 default = discord_bot_token, 
+                                 help    = "string, no quotes, of your discord bot token.\
+                                     No, this script is not going to steal it, Read the source" )
 arguments = parser.parse_args()
 
 if  arguments.saveformat == "csv":
@@ -203,9 +210,9 @@ async def scrapemessages(message,channel,limit):
         else:
             return False
 
-    def filterattachment(attachment,urlfilter = domainlist):
+    def filterattachment(attachment,urlfilter = domainlist, extensionfilter = fileextensionfilter):
         if (attachment.url != None):
-            if (attachment.filename.endswith(".jpg" or ".png" or ".gif")):
+            if (attachment.filename.endswith(extensionfilter)):
                 if (checkurlagainstdomain(attachment.url, urlfilter)):
                     return True
 
