@@ -140,32 +140,27 @@ async def scrapemessages(message,channel,limit):
     dbpacker = DatabasePacker()
     #itterate over messages in channel until limit is reached
     for msg in message.channel.history(limit):
+        # filter the messages to exlude various entities
         if filtermessage(message=message):
             data = pandas.DataFrame(columns=['channel', 'sender', 'time', 'content','file'])
             #if attachment exists in message
             if len(message.attachments) > 0:
                 #process attachments to grab images
                 for attachment in message.attachments:
-                    if filterattachment(attachment):
                     #its a link to something and that link is an image in discords CDN
-                    # TODO: add second filter calling a class that checks for discord CDN
-                    # standard headers
-                        imagedata = HTTPDownloadRequest("",discord_bot_token,attachment.url)
-                        imagesaver = SaveDiscordImage(imagebytes      = imagedata,
-                                                      base64orfile    = arguments.saveformat,
-                                                      filename        = attachment.name,
-                                                      imagesaveformat = arguments.imagesaveformat
-                                                    )
+                    if filterattachment(attachment):
+                        imagedata = grabimage(discord_bot_token,attachment.url)
+                        # we now have either base64 image data, or binary image data
                         #base64 specific stuff
-                        #if arguments.saveformat == "base64":
-                        
+                        if arguments.saveformat == "base64":
+                            pass
                         # if they want to save an image as a file and link to it in the database
                         if arguments.saveformat == "file":
                             # add the time and sender/messageID to name
                             # just in case of data loss
-                            file_location = arguments.dbname + "_" + str(datetime.now) + "_" + msg.author
-                        # we now have either base64 image data, or binary image data
-                        imageblob = imagesaver.imagedata
+                            filelocation = ""
+                            file_name = arguments.dbname + "_" + str(datetime.now) + "_" + msg.author
+                        #imageblob = imagesaver.imagedata
                     else:
                         raise Exception
             #pack info into dataframe

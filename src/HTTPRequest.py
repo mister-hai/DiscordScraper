@@ -60,21 +60,24 @@ class DiscordAuth(requests.auth.AuthBase):
         return self.username, self.token
 
 class APIRequest():
-    '''uses Requests to return specific routes from a base API url'''
+    '''uses Requests to return specific routes from a base API url
+    used for future stuff'''
     def __new__(cls, *args, **kwargs):
         #default fake value
         cls.apibaseurl = str
         cls.data       = bytes
+        cls.thing      = bytes
         return super(__class__, cls).__new__(cls, *args, **kwargs)
 
     def __init__(self, apibaseurl:str, thing:str):
-        self.request_url = requote_uri("{}{}".format(self.apibaseurl,str(self.thing)))
-        blueprint("[+] Requesting: " + makered(self.request_url) + "\n")
-        self.request_return = requests.get(self.request_url)
-    
+        pass
+
     def request(self, url, auth=('user', 'pass')):
         '''makes the actual request'''
-        return requests.get(url=url, auth=auth)
+        self.request_url = requote_uri("{}{}".format(self.apibaseurl,str(self.thing)))
+        blueprint("[+] Requesting Resource: " + makered(self.request_url) + "\n")
+        self.request_return = requests.get(self.request_url, auth=auth)
+        return self.request_return
 
     def checkurlagainstdomain(self,urltoscan,listofdomains):
         parsedurl = urlparse(urltoscan)
