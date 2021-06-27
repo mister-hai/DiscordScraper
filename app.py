@@ -26,7 +26,33 @@
 ################################################################################
 """
 Discord bot message archival
-    --saveformat sets the defaults save format
+"""
+__description__ = '''
+'''
+__docs__ = '''
+'''
+__credits__ = {"credit1":"mister_hai",
+                "credit2":"",
+                "credit3":""}
+
+__filestructure__ = """
+/module/
+    setup.py
+    app.py
+        /src/
+            __init__.py
+            src1.py
+            src2.py
+            src....py
+        /database/
+            /images/
+                /date-time/
+                    img1-date-time.jpg.b64
+                    img2-date-time.jpg.b64
+                    img3-date-time.jpg.b64
+            /messages-date/
+                msg1-date-time.csv
+                msg2-date-time.csv
 
 """
 ################################################################################
@@ -60,6 +86,10 @@ from src.database import table_exists
 # Variables, Technically "loose ends", the dangly bits that you connect to 
 # other code that functionally represent the ends of wires/data pipelines/etc...
 ################################################################################
+databasefolder      = "/database"
+imagefolder         = databasefolder + "/images"
+imagesavepath       = lambda imagename: imagefolder + imagename
+
 fileextensionfilter = [".jpg",".png",".gif"]
 listofpandascolumns = ['channel', 'sender', 'time', 'content','file']
 discord_bot_token   = "NzE0NjA3NTAyOTg1MDAzMDgw.XxV-HQ.mn5f97TDYXtuFVgTwUccfsW4Guk"
@@ -112,13 +142,17 @@ parser.add_argument('--auth-token',
                                  default = discord_bot_token, 
                                  help    = "string, no quotes, of your discord bot token.\
                                      No, this script is not going to steal it, Read the source" )
+parser.add_argument('--auth-token',
+                                 dest    = 'token',
+                                 action  = "store" ,
+                                 default = discord_bot_token, 
+                                 help    = "will gzip the 'folder of the day', as it were" )                                     
 arguments = parser.parse_args()
 
 if  arguments.saveformat == "csv":
     SAVETOCSV = True
 else:
     SAVETOCSV == False
-
 
 ###############################################################################
 #                DISCORD COMMANDS
@@ -152,6 +186,8 @@ async def scrapemessages(message,channel,limit):
                         imagedata = grabimage(discord_bot_token,attachment.url)
                         # we now have either base64 image data, or binary image data
                         #base64 specific stuff
+                        # save the image to specific folder, accordin to date time
+                        # making a new folder if we have to.
                         if arguments.saveformat == "base64":
                             pass
                         # if they want to save an image as a file and link to it in the database
