@@ -43,59 +43,6 @@ from requests.utils import requote_uri
 from src.util import redprint,blueprint,greenprint,errormessage,debugmessage
 from src.util import warn,yellowboldprint,defaultheaders,makered,domainlist
 
-class DiscordAuth(requests.auth.AuthBase):
-    '''Change the nam, change the project.
-    Basic requests Auth() implementation'''
-    def __new__(cls, *args, **kwargs):
-        #default fake value
-        cls.username = "MisterHai"
-        cls.token   = "NzE0NjA3NTAyOTg1MDAzMDgw.XxV-HQ.mn5f97TDYXtuFVgTwUccfsW4Guk"
-        return super(DiscordAuth, cls).__new__(cls, *args, **kwargs)
-
-    def __init__(self, token):
-        if token:
-            self.token = token
-
-    def __call__(self):
-        return self.username, self.token
-
-class APIRequest():
-    '''uses Requests to return specific routes from a base API url
-    used for future stuff'''
-    def __new__(cls, *args, **kwargs):
-        #default fake value
-        cls.apibaseurl = str
-        cls.data       = bytes
-        cls.thing      = bytes
-        return super(__class__, cls).__new__(cls, *args, **kwargs)
-
-    def __init__(self, apibaseurl:str, thing:str):
-        pass
-
-    def request(self, url, auth=('user', 'pass')):
-        '''makes the actual request'''
-        self.request_url = requote_uri("{}{}".format(self.apibaseurl,str(self.thing)))
-        blueprint("[+] Requesting Resource: " + makered(self.request_url) + "\n")
-        self.request_return = requests.get(self.request_url, auth=auth)
-        return self.request_return
-
-    def checkurlagainstdomain(self,urltoscan,listofdomains):
-        parsedurl = urlparse(urltoscan)
-        qwer = parsedurl.netloc.split('/')[2].split(':')[0]
-        if qwer in listofdomains:
-            return True
-        else:
-            return False
-    def filtermessage(self,message):
-        pass
-
-    def filterattachment(self,attachment,urlfilter = domainlist):
-        if (attachment.url != None):
-            if (attachment.filename.endswith(".jpg" or ".png" or ".gif")):
-                if (self.checkurlagainstdomain(attachment.url, urlfilter)):
-                    return True
-
-
 
 class HTTPDownloadRequest():
     '''refactoring to be generic, was based on discord, DEFAULTS TO DISCORD AUTHSTRING'''
@@ -105,14 +52,6 @@ class HTTPDownloadRequest():
             self.headers = defaultheaders
         else:
             self.setHeaders(headers)
-        # just a different way of setting a default
-        # good for long strings as defaults
-    # Authorization headers set with headers= will be overridden if credentials 
-    #    are specified in .netrc, which in turn will be overridden by the auth= parameter. 
-    #    Requests will search for the netrc file at ~/.netrc, ~/_netrc, or at the path 
-    # Authorization headers will be removed if you get redirected off-host.
-    # Proxy-Authorization headers will be overridden by proxy credentials provided in the URL.
-    # Content-Length headers will be overridden when we can determine the length of the content.
 
     def makerequest(self):
         try:
@@ -123,7 +62,7 @@ class HTTPDownloadRequest():
                 raise Exception
 
         except Exception:
-            errormessage("[-] Error in HTTPDownloadRequest()")
+            errormessage("[-] Error in HTTPDownloadRequest(), ")
 
     def setrequesturl(self,newurl):
         '''sets the url to request from

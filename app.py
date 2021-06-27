@@ -276,6 +276,12 @@ async def scrapemessages(message,limit):
         else:
             return False
 
+    def filterattachment(self,attachment,urlfilter = domainlist):
+        if (attachment.url != None):
+            if (attachment.filename.endswith(".jpg" or ".png" or ".gif")):
+                if (self.checkurlagainstdomain(attachment.url, urlfilter)):
+                    return True
+
     def filtermessage(message):
         '''logic for allowing the copntrol flow to continue'''
         if msg.author != bot.user:
