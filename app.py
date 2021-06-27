@@ -57,7 +57,8 @@ from src.util import warn,yellowboldprint,warning_message,scanfilesbyextension
 from src.util import info_message
 from src.database import table_exists
 ################################################################################
-# Variables
+# Variables, Technically "loose ends", the dangly bits that you connect to 
+# other code that functionally represent the ends of wires/data pipelines/etc...
 ################################################################################
 fileextensionfilter = [".jpg",".png",".gif"]
 listofpandascolumns = ['channel', 'sender', 'time', 'content','file']
@@ -162,9 +163,9 @@ async def scrapemessages(message,channel,limit):
                         if arguments.saveformat == "file":
                             # add the time and sender/messageID to name
                             # just in case of data loss
-                            file_location = arguments.dbname + "_" + str(datetime.now()) + "_" + msg.author
+                            file_location = arguments.dbname + "_" + str(datetime.now) + "_" + msg.author
                         # we now have either base64 image data, or binary image data
-                        imageblob = imagesaver.imagedata()
+                        imageblob = imagesaver.imagedata
                     else:
                         raise Exception
             #pack info into dataframe
@@ -180,6 +181,8 @@ async def scrapemessages(message,channel,limit):
             if SAVETOCSV == True:
                 #file_location = arguments.dbname + str(today) # Set the string to where you want the file to be saved to
                 data.to_csv(file_location)
+                #write file to image folder under date
+                imagewat = SaveDiscordImage(imageblob)
             #i they want to push it to a local sqlite3 database
             elif SAVETOCSV == False:
                 messagesent = DiscordMessage(channel = data['channel'],
@@ -216,7 +219,17 @@ async def scrapemessages(message,channel,limit):
                 if (checkurlagainstdomain(attachment.url, urlfilter)):
                     return True
 
-
+    def grabimage(token,imageurl,savefilename):
+        try:
+            imageblob = SaveDiscordImage( imageurl = imageurl,
+                            token        = token,
+                            base64orfile = arguments.saveformat,
+                            filename     = savefilename,
+                            imagesaveformat = arguments.imagesaveformat
+                            )
+            return imageblob
+        except Exception:
+            errormessage("[-] Failed To Grab Image: {}".format(imageurl))
 
 ###############################################################################
 #                MAIN CONTROL FLOW

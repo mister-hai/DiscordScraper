@@ -34,20 +34,23 @@ import PIL
 import base64
 import sys,os
 from io import BytesIO
-from util import redprint,blueprint,greenprint,warning_message,errormessage
+from src.util import redprint,blueprint,greenprint,warning_message,errormessage
+from src.util import randomimagename
+from src.HTTPRequest import HTTPDownloadRequest
 ###############################################################################
 #                IMAGE SAVING CLASS
 ###############################################################################
-randomimagename = lambda string: str(os.urandom(12)) + ".png"
 class SaveDiscordImage():
-    def __init__(self,  
+    def __init__(self,
+                 token:str,
+                 imageurl:str,
                  imagebytes:bytes,
                  base64orfile = "file", 
                  filename = "",
                  imagesaveformat = ".png"):
         try:
             self.imagesaveformat = imagesaveformat
-            self.imagein = imagebytes
+            self.imagein = HTTPDownloadRequest("",token,imageurl)
             self.imageout = bytes
 
             if len(filename) > 0 :

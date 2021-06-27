@@ -87,6 +87,8 @@ gzcompress = lambda inputdata: {"data" : gzip.compress(inputdata)}
 
 scanfilesbyextension = lambda directory,extension: [f for f in os.listdir(directory) if f.endswith(extension)]
 
+randomimagename = lambda string: str(os.urandom(12)) + ".png"
+
 testurl = 'http://www.cwi.nl:80/%7Eguido/Python.html'
 
 domainlist = ['discordapp.com', 'discord.com', "discordapp.net"]
@@ -148,6 +150,5 @@ def gzfilewritestring(datablob,filename):
 def gzipreadfiletostring(filename, metaclassforfile):
     with gzip.open(filename, 'rb') as ip:
         with io.TextIOWrapper(ip, encoding='utf-8') as decoder:
-            # Let's read the content using read()
             content = decoder.read()
             return content 
