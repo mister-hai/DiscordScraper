@@ -36,14 +36,16 @@ LONG_DESCRIPTION = '''
 Discord Scraping Utility I made to save important conversations
 '''        
     
-setup(name = 'blorp a lot',
+setup(name = 'Discrod Scraper',
         version = '0.1',
-        description = 'Statistical and Metrical Tooling for Crypto and Maths Lernin',
+        description = 'Used to save messages and pictures, \
+            will use either a SQLite3DB or CSV files while saving \
+            images as either base64 or by indexed paths to a local folder',
         long_description = LONG_DESCRIPTION,
         author = 'bitches stealing shit',
         author_email = 'mrhai_gmail.fuckyourself',
-        url = 'https://github.com/mister-hai/CryptoLib',
-        packages = ['CryptoLib'],
+        url = 'https://github.com/mister-hai/',
+        packages = ['Dick-to-lib'],
         classifiers = [
           'Topic :: Security :: Cryptography',
           'License :: OSI Approved :: WATtm License',

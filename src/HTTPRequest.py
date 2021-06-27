@@ -37,10 +37,69 @@ from io import BytesIO
 from pathlib import Path
 
 from urllib.parse import urlparse
+from requests import requote_uri
 
 
 from src.util import redprint,blueprint,greenprint,errormessage,debugmessage
-from src.util import warn,yellowboldprint,defaultheaders
+from src.util import warn,yellowboldprint,defaultheaders,makered
+
+class ParentClass(object):
+    def __new__(cls, *args, **kwargs):
+        return super(__class__, cls).__new__(cls, *args, **kwargs)
+    def __init__(self):
+        self.data = {}
+    def __call__(self):
+        return self.data
+
+class ChildClass(ParentClass):
+    def __new__(cls, *args, **kwargs):
+        print(super(__class__, cls).__new__(cls, *args, **kwargs))
+    def __init__(self):
+        self.data = {}
+    def __call__(self):
+        print("class name: " + self.__class__)
+
+class DiscordAuth(requests.auth.AuthBase):
+    def __new__(cls, *args, **kwargs):
+        #default fake value
+        cls.discord_bot_token   = "NzE0NjA3NTAyOTg1MDAzMDgw.XxV-HQ.mn5f97TDYXtuFVgTwUccfsW4Guk"
+        return super(DiscordAuth, cls).__new__(cls, *args, **kwargs)
+
+    def __init__(self, discord_bot_token):
+        if discord_bot_token:
+            self.discord_bot_token = discord_bot_token
+
+    def __call__(self, r):
+        return self.discord_bot_token
+
+class APIRequest():
+    '''uses Requests to return specific routes from a base API url'''
+    def __init__(self, apibaseurl:str, thing:str):
+        self.request_url = requote_uri("".format(apibaseurl,self.thing))
+        blueprint("[+] Requesting: " + makered(self.request_url) + "\n")
+        self.request_return = requests.get(self.request_url)
+    
+    def request(self, url, auth=('user', 'pass')):
+        '''makes the actual request'''
+        return requests.get(url=url, auth=auth)
+
+    def checkurlagainstdomain(self,urltoscan,listofdomains):
+        parsedurl = urlparse(urltoscan)
+        qwer = parsedurl.netloc.split('/')[2].split(':')[0]
+        if qwer in listofdomains:
+            return True
+        else:
+            return False
+    def filtermessage(self,message):
+        pass
+
+    def filterattachment(self,attachment,urlfilter = domainlist):
+        if (attachment.url != None):
+            if (attachment.filename.endswith(".jpg" or ".png" or ".gif")):
+                if (self.checkurlagainstdomain(attachment.url, urlfilter)):
+                    return True
+
+
 
 class HTTPDownloadRequest():
     '''refactoring to be generic, was based on discord, DEFAULTS TO DISCORD AUTHSTRING'''

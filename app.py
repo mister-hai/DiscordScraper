@@ -42,18 +42,24 @@ import requests
 from pathlib import Path
 import datetime
 from datetime import date
+###############################################################################
+from requests.auth import HTTPBasicAuth
 from urllib.parse import urlparse
 import discord
 from discord.ext import commands, tasks
+###############################################################################
 from src.DatabasePacker import DatabasePacker
 from src.HTTPRequest import HTTPDownloadRequest
 from src.SaveDiscordImage import SaveDiscordImage
 from src.database import DiscordMsgDB,DiscordMessage,addmsgtodb
 from src.util import redprint,blueprint,greenprint,errormessage,debugmessage
-from src.util import warn,yellowboldprint,warning_message
+from src.util import warn,yellowboldprint,warning_message,scanfilesbyextension
+from src.util import info_message
+from src.database import table_exists
 ################################################################################
 # Variables
 ################################################################################
+listofpandascolumns = ['channel', 'sender', 'time', 'content','file']
 discord_bot_token   = "NzE0NjA3NTAyOTg1MDAzMDgw.XxV-HQ.mn5f97TDYXtuFVgTwUccfsW4Guk"
 COMMAND_PREFIX      = "."
 bot_help_message = "I AM"
@@ -64,9 +70,9 @@ load_cogs           = False
 bot = commands.Bot(command_prefix=(COMMAND_PREFIX))
 domainlist = ['discordapp.com', 'discord.com', "discordapp.net"]
 attachmentsurl = "/attachments/"
-client = discord.Client()
+#client = discord.Client()
+bot = discord.Bot()
 guild = discord.Guild
-SAVETOCSV = arguments.saveformat
 today = date.today()
 ###############################################################################
 #                        Command Line Arguments
@@ -100,6 +106,11 @@ parser.add_argument('--imagesaveformat',
                                  help    = "File extension for images" )
 arguments = parser.parse_args()
 
+if  arguments.saveformat == "csv":
+    SAVETOCSV = True
+else:
+    SAVETOCSV == False
+
 
 ###############################################################################
 #                DISCORD COMMANDS
@@ -121,22 +132,16 @@ async def scrapemessages(message,channel,limit):
     dbpacker = DatabasePacker()
     #itterate over messages in channel until limit is reached
     for msg in message.channel.history(limit):
-        #ain't us
-        if msg.author != client.user:
-            #wasting memory
-            #messageContent = message.content
-            messageattachments = message.attachments
-            ## creater pandas DF
+        if filtermessage(message=message):
             data = pandas.DataFrame(columns=['channel', 'sender', 'time', 'content','file'])
-            #if self.filtermessage(messageattachments):
             #if attachment exists in message
-            if len(messageattachments) > 0:
+            if len(message.attachments) > 0:
                 #process attachments to grab images
-                for attachment in messageattachments:
+                for attachment in message.attachments:
+                    if filterattachment(attachment):
                     #its a link to something and that link is an image in discords CDN
                     # TODO: add second filter calling a class that checks for discord CDN
-                    if (attachment.url != None) and (attachment.filename.endswith(".jpg" or ".png" or ".gif")):
-                        # standard headers
+                    # standard headers
                         imagedata = HTTPDownloadRequest("",discord_bot_token,attachment.url)
                         imagesaver = SaveDiscordImage(imagebytes      = imagedata,
                                                       base64orfile    = arguments.saveformat,
@@ -183,37 +188,27 @@ async def scrapemessages(message,channel,limit):
         if len(data) == limit:
             break
 
-    def checkurlagainstdomain(self,urltoscan,listofdomains):
+    def checkurlagainstdomain(urltoscan,listofdomains):
         parsedurl = urlparse(urltoscan)
-        qwer = parsedurl.netloc.split('/')[2].split(':')[0]
-        if qwer in listofdomains:
+        domainrequested = parsedurl.netloc.split('/')[2].split(':')[0]
+        if domainrequested in listofdomains:
             return True
         else:
             return False
 
-    def filtermessage(self,attachment):
+    def filtermessage(message):
+        '''logic for allowing the copntrol flow to continue'''
+        if msg.author != bot.user:
+            return True
+        else:
+            return False
+
+    def filterattachment(attachment,urlfilter = domainlist):
         if (attachment.url != None):
             if (attachment.filename.endswith(".jpg" or ".png" or ".gif")):
-                if (checkurlagainstdomain(attachment.url, domainlist)):
+                if (checkurlagainstdomain(attachment.url, urlfilter)):
                     return True
 
-class DiscordAuth(requests.auth.AuthBase):
-    def __cls__(cls,self):
-        self.discord_bot_token   = "NzE0NjA3NTAyOTg1MDAzMDgw.XxV-HQ.mn5f97TDYXtuFVgTwUccfsW4Guk"
-    def __init__(self):
-        self.discord_bot_token   = ""
-
-    def __call__(self, r):
-        return self.discord_bot_token
-
-
-
-class APIRequest():
-    '''uses Requests to return specific routes from a base API url'''
-    def __init__(self, apibaseurl:str, thing:str):
-        self.request_url = requote_uri("".format(apibaseurl,self.thing))
-        blueprint("[+] Requesting: " + makered(self.request_url) + "\n")
-        self.request_return = requests.get(self.request_url)
 
 
 ###############################################################################
@@ -222,14 +217,18 @@ class APIRequest():
 try:
     if __name__ == '__main__':
         try:
+            #start the bot
             bot.run(discord_bot_token, bot=True)
-            if os.path.exists('./messagedatabase.db') == False:
+            #check for database file
+            if os.path.exists(arguments.dbname) == False:
                 try:
+                    #if its not there, make file
                     DiscordMsgDB.create_all()
                     DiscordMsgDB.session.commit()
                     info_message("[+] Database Tables Created")
                 except Exception:
                     errormessage("[-] Database Table Creation FAILED \n")
+                #test database entry mechanics
                 try:
                     test_msg = DiscordMessage(sender = 'sender',
                                     time = 'time',
@@ -240,16 +239,28 @@ try:
                     info_message("[+] Test Commit SUCESSFUL, Continuing!\n")
                 except Exception:
                     errormessage("[-] Test Commit FAILED \n") 
-                try:
-                    messagescraper = ScrapeChannel(channel,history_length)
-                    messagescraper.dothethingjulie()
-                except Exception:
-                    errormessage("[-] Database Table Creation FAILED \n")
+            # IMPORTANT!!!
+            #database file already exists!
+            #backup this db file, ONLY the file.db!!
+            ## ADD IMAGES TO ARCHIVE IN FOLDER
+
+            elif os.path.exists(arguments.dbname) == True:
+                for each in listofpandascolumns:
+                    if table_exists(each):
+                        pass
+            #perform the actual activity requested by the user
+            try:
+                pass
+                #messagescraper = ScrapeChannel(channel,history_length)
+                #messagescraper.dothethingjulie()
+            except Exception:
+                errormessage("[-] OPERATION FAILED!!! \n")
+
             else:
                 warning_message('[+] Database already exists, skipping creation')
         except Exception:
             errormessage("[-] Database existence Check FAILED")
-    else:
+            else:
         print("wat")
 except:
     redprint("[-] Error starting program")
