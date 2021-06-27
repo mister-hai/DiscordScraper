@@ -37,45 +37,38 @@ from io import BytesIO
 from pathlib import Path
 
 from urllib.parse import urlparse
-from requests import requote_uri
+from requests.utils import requote_uri
 
 
 from src.util import redprint,blueprint,greenprint,errormessage,debugmessage
-from src.util import warn,yellowboldprint,defaultheaders,makered
-
-class ParentClass(object):
-    def __new__(cls, *args, **kwargs):
-        return super(__class__, cls).__new__(cls, *args, **kwargs)
-    def __init__(self):
-        self.data = {}
-    def __call__(self):
-        return self.data
-
-class ChildClass(ParentClass):
-    def __new__(cls, *args, **kwargs):
-        print(super(__class__, cls).__new__(cls, *args, **kwargs))
-    def __init__(self):
-        self.data = {}
-    def __call__(self):
-        print("class name: " + self.__class__)
+from src.util import warn,yellowboldprint,defaultheaders,makered,domainlist
 
 class DiscordAuth(requests.auth.AuthBase):
+    '''Change the nam, change the project.
+    Basic requests Auth() implementation'''
     def __new__(cls, *args, **kwargs):
         #default fake value
-        cls.discord_bot_token   = "NzE0NjA3NTAyOTg1MDAzMDgw.XxV-HQ.mn5f97TDYXtuFVgTwUccfsW4Guk"
+        cls.username = "MisterHai"
+        cls.token   = "NzE0NjA3NTAyOTg1MDAzMDgw.XxV-HQ.mn5f97TDYXtuFVgTwUccfsW4Guk"
         return super(DiscordAuth, cls).__new__(cls, *args, **kwargs)
 
-    def __init__(self, discord_bot_token):
-        if discord_bot_token:
-            self.token = discord_bot_token
+    def __init__(self, token):
+        if token:
+            self.token = token
 
     def __call__(self):
         return self.username, self.token
 
 class APIRequest():
     '''uses Requests to return specific routes from a base API url'''
+    def __new__(cls, *args, **kwargs):
+        #default fake value
+        cls.apibaseurl = str
+        cls.data       = bytes
+        return super(__class__, cls).__new__(cls, *args, **kwargs)
+
     def __init__(self, apibaseurl:str, thing:str):
-        self.request_url = requote_uri("".format(apibaseurl,self.thing))
+        self.request_url = requote_uri("{}{}".format(self.apibaseurl,str(self.thing)))
         blueprint("[+] Requesting: " + makered(self.request_url) + "\n")
         self.request_return = requests.get(self.request_url)
     
@@ -103,10 +96,8 @@ class APIRequest():
 
 class HTTPDownloadRequest():
     '''refactoring to be generic, was based on discord, DEFAULTS TO DISCORD AUTHSTRING'''
-    def __init__(self,headers:dict, httpauthstring:str,url:str,discord_bot_token = ""):
-        self.responsedatacontainer = []
+    def __init__(self,headers:dict,url:str,username,token = ""):
         self.requesturl = url
-        self.domainfilterlist = ['discordapp.com', 'discord.com', "discordapp.net"]
         if len(self.headers) > 0:
             self.headers = defaultheaders
         else:
@@ -163,7 +154,7 @@ class HTTPDownloadRequest():
                 redirecturl = self.response.header('Location')
                 newdomain = redirecturl.split('/')[2].split(':')[0]
                 # If the domain is a part of Discord then re-run this function.
-                if newdomain in self.domainfilterlist:
+                if newdomain in domainlist:
                     self.sendRequest(redirecturl)
                 # Throw a warning message to acknowledge an untrusted redirect.
                 warn('[+] Ignored unsafe redirect to {}.'.format(redirecturl))
@@ -194,16 +185,16 @@ Returns False if no error
         set2 = [400,405,501]
         set3 = [500]
         if responsecode in set1 :
-            blueprint("[-] Server side error - No Image Available in REST response")
+            blueprint("[-] Server side error - No Resource Available in REST response")
             yellowboldprint("Error Code {}".format(responsecode))
             return True # "[-] Server side error - No Image Available in REST response"
         if responsecode in set2:
-            redprint("[-] User error in Image Request")
+            redprint("[-] User error in Request")
             yellowboldprint("Error Code {}".format(responsecode))
             return True # "[-] User error in Image Request"
         if responsecode in set3:
             #unknown error
-            blueprint("[-] Unknown Server Error - No Image Available in REST response")
+            blueprint("[-] Unknown Server Error - No Resource Available in REST response")
             yellowboldprint("Error Code {}".format(responsecode))
             return True # "[-] Unknown Server Error - No Image Available in REST response"
         # no error!
