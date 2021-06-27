@@ -29,6 +29,7 @@ Discord bot message archival
     --saveformat sets the defaults save format
 
 """
+import gzip,io
 import sys,os
 import logging
 import pkgutil
@@ -82,6 +83,8 @@ warning_message   = lambda message: logger.warning(yellowboldprint(message))
 error_message     = lambda message: logger.error(redprint(message)) 
 critical_message  = lambda message: logger.critical(yellowboldprint(message))
 
+gzcompress = lambda inputdata: {"data" : gzip.compress(inputdata)}
+
 scanfilesbyextension = lambda directory,extension: [f for f in os.listdir(directory) if f.endswith(extension)]
 
 testurl = 'http://www.cwi.nl:80/%7Eguido/Python.html'
@@ -126,3 +129,25 @@ def warn(message):
     """
     # Append our message with a newline character.
     yellowboldprint('[WARN] {0}\n'.format(message))
+
+def gzfilewritestring(datablob,filename):
+    with gzip.open(filename, 'wb') as output:
+        # We cannot directly write Python objects like strings!
+        # We must first convert them into a bytes format using 
+        # io.BytesIO() and then write it
+        # CHECK TO MAKE SURE ITS A TYPE YOU CAN USE
+        if type(datablob) in [str,list,dict]:
+            with io.TextIOWrapper(output, encoding='utf-8') as encode:
+                encode.write(datablob)
+            
+            byteswritten = "[+] {} Bytes Written to : {}".format(os.stat(filename).st_size, filename)
+            greenprint(byteswritten)
+        else:
+            raise ValueError
+
+def gzipreadfiletostring(filename, metaclassforfile):
+    with gzip.open(filename, 'rb') as ip:
+        with io.TextIOWrapper(ip, encoding='utf-8') as decoder:
+            # Let's read the content using read()
+            content = decoder.read()
+            return content 

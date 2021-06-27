@@ -217,17 +217,13 @@ async def scrapemessages(message,channel,limit):
 try:
     if __name__ == '__main__':
         try:
-            #start the bot
-            bot.run(discord_bot_token, bot=True)
+###############################################################################
             #check for database file
             if os.path.exists(arguments.dbname) == False:
-                try:
-                    #if its not there, make file
-                    DiscordMsgDB.create_all()
-                    DiscordMsgDB.session.commit()
-                    info_message("[+] Database Tables Created")
-                except Exception:
-                    errormessage("[-] Database Table Creation FAILED \n")
+                #if its not there, make file
+                DiscordMsgDB.create_all()
+                DiscordMsgDB.session.commit()
+                info_message("[+] Database Tables Created")
                 #test database entry mechanics
                 try:
                     test_msg = DiscordMessage(sender = 'sender',
@@ -239,29 +235,29 @@ try:
                     info_message("[+] Test Commit SUCESSFUL, Continuing!\n")
                 except Exception:
                     errormessage("[-] Test Commit FAILED \n") 
-            # IMPORTANT!!!
-            #database file already exists!
-            #backup this db file, ONLY the file.db!!
-            ## ADD IMAGES TO ARCHIVE IN FOLDER
-
+###############################################################################
+                # IMPORTANT!!!
+                #database file already exists!
+                #backup this db file, ONLY the file.db!!
+                ## ADD IMAGES TO ARCHIVE IN FOLDER
             elif os.path.exists(arguments.dbname) == True:
+                greenprint("[+] Database File Exists!")
+                #check for tables
                 for each in listofpandascolumns:
                     if table_exists(each):
-                        pass
+                        warning_message('[+] Table : {} verified'.format(each))
+                    else:
+                        raise Exception
+###############################################################################                        
             #perform the actual activity requested by the user
             try:
-                pass
-                #messagescraper = ScrapeChannel(channel,history_length)
-                #messagescraper.dothethingjulie()
+                #start the bot
+                bot.run(discord_bot_token, bot=True)
             except Exception:
-                errormessage("[-] OPERATION FAILED!!! \n")
-
-            else:
-                warning_message('[+] Database already exists, skipping creation')
+                errormessage("[-] BOT OPERATION FAILED!!! \n")
+###############################################################################
         except Exception:
             errormessage("[-] Database existence Check FAILED")
-            else:
-        print("wat")
 except:
     redprint("[-] Error starting program")
 
