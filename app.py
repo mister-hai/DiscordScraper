@@ -171,10 +171,11 @@ async def on_ready():
 
 imagesaveformat = ".png"
 imagedirectory = os.getcwd() + "/images/"
+messagedirectory = os.getcwd() +"/messages/"
 directory_listing = scanfilesbyextension(imagedirectory,arguments.imagesaveformat)
 #function to call the scraper class when ordered
 @bot.event
-async def scrapemessages(message,channel,limit):
+async def scrapemessages(message,limit):
     #get the input
     dbpacker = DatabasePacker()
     #itterate over messages in channel until limit is reached
@@ -213,7 +214,7 @@ async def scrapemessages(message,channel,limit):
                                 ignore_index = True)
             #perform data output
 
-            #if they want a CSV file
+            #if they want a CSV file of the message contents
             if SAVETOCSV == True:
                 #file_location = arguments.dbname + str(today) # Set the string to where you want the file to be saved to
                 data.to_csv(file_location)
