@@ -67,10 +67,10 @@ class DiscordAuth(requests.auth.AuthBase):
 
     def __init__(self, discord_bot_token):
         if discord_bot_token:
-            self.discord_bot_token = discord_bot_token
+            self.token = discord_bot_token
 
-    def __call__(self, r):
-        return self.discord_bot_token
+    def __call__(self):
+        return self.username, self.token
 
 class APIRequest():
     '''uses Requests to return specific routes from a base API url'''
