@@ -88,7 +88,7 @@ from src.database import table_exists
 ################################################################################
 databasefolder      = "/database"
 imagefolder         = databasefolder + "/images"
-imagesavepath       = lambda imagename: imagefolder + imagename
+#imagesavepath       = lambda imagename: imagefolder + imagename
 
 fileextensionfilter = [".jpg",".png",".gif"]
 listofpandascolumns = ['channel', 'sender', 'time', 'content','file']
@@ -185,18 +185,22 @@ async def scrapemessages(message,channel,limit):
                     if filterattachment(attachment):
                         imagedata = grabimage(discord_bot_token,attachment.url)
                         # we now have either base64 image data, or binary image data
-                        #base64 specific stuff
                         # save the image to specific folder, accordin to date time
                         # making a new folder if we have to.
+                        #base64 specific stuff
+                            #gzip compression
                         if arguments.saveformat == "base64":
                             pass
                         # if they want to save an image as a file and link to it in the database
                         if arguments.saveformat == "file":
+                            databasefolder      = "/database"
+                            imagefolder         = databasefolder + "/images"
                             # add the time and sender/messageID to name
                             # just in case of data loss
-                            filelocation = ""
-                            file_name = arguments.dbname + "_" + str(datetime.now) + "_" + msg.author
-                        #imageblob = imagesaver.imagedata
+                            fullfilepath = imagefolder + "/" + attachment.filename + str(datetime.now) + "_" + msg.author
+                            #craft the path with folder information
+
+                            #imageblob = imagesaver.imagedata
                     else:
                         raise Exception
             #pack info into dataframe
