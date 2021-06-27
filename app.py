@@ -46,17 +46,35 @@ __filestructure__ = """
             src....py
         /database
             /images
-                /channel
+                /channel1
                     /date-time
                         img1-date-time.jpg.b64
                         img2-date-time.jpg.b64
                         img3-date-time.jpg.b64
-            /channel1
-                msgset1-date-time.csv
-                msgset2-date-time.csv
-            /channel2
-                msgset1-date-time.csv
-                msgset2-date-time.csv
+                /channel2
+                    /date-time
+                        img1-date-time.jpg.b64
+                        img2-date-time.jpg.b64
+                        img3-date-time.jpg.b64
+                /channel3
+                    /date-time
+                        img1-date-time.jpg.b64
+                        img2-date-time.jpg.b64
+                        img3-date-time.jpg.b64
+            /messages
+                /channel1
+                    msgset1-date-time.csv
+                    msgset2-date-time.csv
+                    msgset3-date-time.csv
+                /channel2
+                    msgset1-date-time.csv
+                    msgset2-date-time.csv
+                    msgset3-date-time.csv
+                /channel3
+                    msgset1-date-time.csv
+                    msgset2-date-time.csv
+                    msgset3-date-time.csv
+
 """
 ################################################################################
 # Imports
@@ -99,7 +117,7 @@ fileextensionfilter = [".jpg",".png",".gif"]
 listofpandascolumns = ['channel', 'sender', 'time', 'content','file']
 domainlist = ['discordapp.com', 'discord.com', "discordapp.net"]
 attachmentsurl = "/attachments/"
-filterfordiscorddomain = lambda string: for domain in string[0:26] if  # == "https://cnd.discordapp.com"
+#filterfordiscorddomain = lambda string: for domain in string[0:26] if  # == "https://cnd.discordapp.com"
 discord_bot_token   = "NzE0NjA3NTAyOTg1MDAzMDgw.XxV-HQ.mn5f97TDYXtuFVgTwUccfsW4Guk"
 COMMAND_PREFIX      = "."
 bot_help_message    = "I AM"
@@ -147,11 +165,11 @@ parser.add_argument('--auth-token',
                                  default = discord_bot_token, 
                                  help    = "string, no quotes, of your discord bot token.\
                                      No, this script is not going to steal it, Read the source" )
-parser.add_argument('--auth-token',
-                                 dest    = 'token',
-                                 action  = "store" ,
-                                 default = discord_bot_token, 
-                                 help    = "will gzip the 'folder of the day', as it were" )                                     
+parser.add_argument('--gzipped',
+                                 dest    = 'gzipenabled',
+                                 action  = "store",
+                                 default = True, 
+                                 help    = "will gzip as much as possible to save space")    
 arguments = parser.parse_args()
 
 if  arguments.saveformat == "csv":
@@ -169,10 +187,7 @@ async def on_ready():
     await bot.change_presence(activity=discord.Game(name="yo mamma say .help"))
     #await lookup_bot.connect()
 
-imagesaveformat = ".png"
-imagedirectory = os.getcwd() + "/images/"
-messagedirectory = os.getcwd() +"/messages/"
-directory_listing = scanfilesbyextension(imagedirectory,arguments.imagesaveformat)
+
 #function to call the scraper class when ordered
 @bot.event
 async def scrapemessages(message,limit):
@@ -182,7 +197,8 @@ async def scrapemessages(message,limit):
     for msg in message.channel.history(limit):
         # filter the messages to exlude various entities
         if filtermessage(message=message):
-            data = pandas.DataFrame(columns=['channel', 'sender', 'time', 'content','file'])
+            # colums defined at the top
+            data = pandas.DataFrame(columns=listofpandascolumns)
             #if attachment exists in message
             if len(message.attachments) > 0:
                 #process attachments to grab images
@@ -216,6 +232,10 @@ async def scrapemessages(message,limit):
 
             #if they want a CSV file of the message contents
             if SAVETOCSV == True:
+                imagesaveformat = ".png"
+                imagedirectory = os.getcwd() + "/images/"
+                messagedirectory = os.getcwd() +"/messages/"
+                directory_listing = scanfilesbyextension(imagedirectory,arguments.imagesaveformat)
                 #file_location = arguments.dbname + str(today) # Set the string to where you want the file to be saved to
                 data.to_csv(file_location)
                 #write file to image folder under date
