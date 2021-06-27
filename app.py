@@ -39,21 +39,24 @@ __filestructure__ = """
 /module/
     setup.py
     app.py
-        /src/
+        /src
             __init__.py
             src1.py
             src2.py
             src....py
-        /database/
-            /images/
-                /date-time/
-                    img1-date-time.jpg.b64
-                    img2-date-time.jpg.b64
-                    img3-date-time.jpg.b64
-            /messages-date/
-                msg1-date-time.csv
-                msg2-date-time.csv
-
+        /database
+            /images
+                /channel
+                    /date-time
+                        img1-date-time.jpg.b64
+                        img2-date-time.jpg.b64
+                        img3-date-time.jpg.b64
+            /channel1
+                msgset1-date-time.csv
+                msgset2-date-time.csv
+            /channel2
+                msgset1-date-time.csv
+                msgset2-date-time.csv
 """
 ################################################################################
 # Imports
@@ -163,7 +166,7 @@ else:
 @bot.event
 async def on_ready():
     print("Discrod Scraper ALPHA")
-    await bot.change_presence(activity=discord.Game(name="Chembot - type .help"))
+    await bot.change_presence(activity=discord.Game(name="yo mamma say .help"))
     #await lookup_bot.connect()
 
 imagesaveformat = ".png"
