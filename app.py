@@ -68,6 +68,7 @@ import requests
 from pathlib import Path
 import datetime
 from datetime import date
+import shutil
 ###############################################################################
 from requests.auth import HTTPBasicAuth
 from urllib.parse import urlparse
@@ -86,26 +87,27 @@ from src.database import table_exists
 # Variables, Technically "loose ends", the dangly bits that you connect to 
 # other code that functionally represent the ends of wires/data pipelines/etc...
 ################################################################################
-databasefolder      = "/database"
-imagefolder         = databasefolder + "/images"
-#imagesavepath       = lambda imagename: imagefolder + imagename
+global timeofrun
+global today
+today = date.today()
+timeofrun = datetime.now
 
 fileextensionfilter = [".jpg",".png",".gif"]
 listofpandascolumns = ['channel', 'sender', 'time', 'content','file']
+domainlist = ['discordapp.com', 'discord.com', "discordapp.net"]
+attachmentsurl = "/attachments/"
+filterfordiscorddomain = lambda string: for domain in string[0:26] if  # == "https://cnd.discordapp.com"
 discord_bot_token   = "NzE0NjA3NTAyOTg1MDAzMDgw.XxV-HQ.mn5f97TDYXtuFVgTwUccfsW4Guk"
 COMMAND_PREFIX      = "."
 bot_help_message    = "I AM"
 BOT_PERMISSIONS     = 3072
 devs                = [712737412018733076]
-#cog_directory_files = os.listdir("./things_it_does/cogs")
+#cog_directory_files = os.listdir("./cogs")
 load_cogs           = False
 bot = commands.Bot(command_prefix=(COMMAND_PREFIX))
-domainlist = ['discordapp.com', 'discord.com', "discordapp.net"]
-attachmentsurl = "/attachments/"
 #client = discord.Client()
 bot = discord.Bot()
 guild = discord.Guild
-today = date.today()
 ###############################################################################
 #                        Command Line Arguments
 ###############################################################################
@@ -188,22 +190,18 @@ async def scrapemessages(message,channel,limit):
                         # save the image to specific folder, accordin to date time
                         # making a new folder if we have to.
                         #base64 specific stuff
-                            #gzip compression
+                            #gzip compression?
                         if arguments.saveformat == "base64":
-                            pass
+                            imagedata = base64.b64encode(imagedata)
                         # if they want to save an image as a file and link to it in the database
+                            #no gzip compression!
                         if arguments.saveformat == "file":
-                            databasefolder      = "/database"
-                            imagefolder         = databasefolder + "/images"
-                            # add the time and sender/messageID to name
-                            # just in case of data loss
-                            fullfilepath = imagefolder + "/" + attachment.filename + str(datetime.now) + "_" + msg.author
-                            #craft the path with folder information
-
-                            #imageblob = imagesaver.imagedata
+                            filepath = savefile(imagedata, attachment.filename)
+                            #now we change the image data to a file path of the image
+                            imagedata = filepath
                     else:
                         raise Exception
-            #pack info into dataframe
+            #now we pack info into dataframe
             data = data.append({'channel'      : msg.channel,
                                 'sender'       : msg.author.name,
                                 'time'         : msg.created_at,
@@ -218,13 +216,11 @@ async def scrapemessages(message,channel,limit):
                 data.to_csv(file_location)
                 #write file to image folder under date
                 imagewat = SaveDiscordImage(imageblob)
-            #i they want to push it to a local sqlite3 database
             elif SAVETOCSV == False:
                 messagesent = DiscordMessage(channel = data['channel'],
                                             time     = data['time'],
                                             sender   = data['sender'],
                                             content  = data['content'],
-                                            # either a file path or base64 
                                             file     = data['file'])
                 #push to DB
                 addmsgtodb(messagesent)
@@ -232,6 +228,21 @@ async def scrapemessages(message,channel,limit):
         #stop at message limit
         if len(data) == limit:
             break
+
+        def savefile(imagedata,filename):
+            databasefolder      = "/database"
+            baseimagefolder     = databasefolder + "/images/"
+            imagefoldernow      = baseimagefolder + timeofrun
+            # add the time and sender/messageID to name
+            # just in case of data loss
+            fullfilepath = imagefoldernow + "/" + filename + str(datetime.now()) + "_" + msg.author
+            #craft the path with folder information
+            if os.path.isdir(imagefoldernow) == False:
+                os.makedirs(imagefoldernow, exist_ok=True)
+            with open(filename,'wb') as out_file:
+                shutil.copyfileobj(imagedata, out_file)
+            return fullfilepath
+
 
     def checkurlagainstdomain(urltoscan,listofdomains):
         parsedurl = urlparse(urltoscan)
@@ -265,6 +276,9 @@ async def scrapemessages(message,channel,limit):
             return imageblob
         except Exception:
             errormessage("[-] Failed To Grab Image: {}".format(imageurl))
+    
+    def writetodbfolder():
+        
 
 ###############################################################################
 #                MAIN CONTROL FLOW
