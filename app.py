@@ -30,7 +30,7 @@
 """
 Discord bot message archival
 """
-__description__ = '''
+__description__ = '''Saves Discord Conversations per channel in sqlite3.db or csv.txt with images as base64.txt or png
 '''
 __docs__ = '''
 '''
@@ -143,9 +143,8 @@ BOT_PERMISSIONS     = 3072
 devs                = [712737412018733076]
 #cog_directory_files = os.listdir("./cogs")
 load_cogs           = False
-bot = discord.Bot()
 bot = commands.Bot(command_prefix=(COMMAND_PREFIX))
-client = discord.Client()
+#client = discord.Client()
 guild = discord.Guild
 ###############################################################################
 #                        Command Line Arguments
@@ -187,7 +186,13 @@ parser.add_argument('--gzipped',
                                  dest    = 'gzipenabled',
                                  action  = "store",
                                  default = True, 
-                                 help    = "will gzip as much as possible to save space")    
+                                 help    = "will gzip as much as possible to save space")
+parser.add_argument('--docs',
+                                 dest    = 'printdocumentation',
+                                 action  = "store",
+                                 default = True, 
+                                 help    = "Prints the Documentation to the terminal, \
+                                     use './app.py --docs >> docs.txt' to save to a file") 
 arguments = parser.parse_args()
 
 # need this here, in this spot
