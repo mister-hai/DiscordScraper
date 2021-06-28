@@ -34,24 +34,68 @@ import pandas
 
 from src.util import redprint,blueprint,greenprint,warning_message,errormessage
 from src.database import DiscordMsgDB,DiscordMessage,addmsgtodb
+
 ###############################################################################
 #                CHANNEL SCRAPING CLASS
 ###############################################################################
-class DatabasePacker():
+class DiscordScrape():
+    def __init__(self,message):
+        #if attachment exists in message
+        if len(message.attachments) > 0:
+            #process attachments to grab images
+            for attachment in message.attachments:
+                #its a link to something and that link is an image in 
+                # discords CDN
+                #TODO:
+                # imgur
+                # rule34
+                # furaffinity
+                # other furry shit
+                if msghandler.filterattachment(attachment):
+                    imagedata = msghandler.grabimage(discord_bot_token,attachment.url)
+                    # we now have either base64 image data, or binary image data
+                    # save the image to specific folder, accordin to date time
+                    # making a new folder if we have to.
+                    #base64 specific stuff
+                        #gzip compression?
+                    if arguments.saveformat == "base64":
+                        imagedata = base64.b64encode(imagedata)
+                    # if they want to save an image as a file and link to it in the database
+                        #no gzip compression!
+                    if arguments.saveformat == "file":
+                        filepath = msghandler.savefile(imagedata, attachment.filename)
+                        #now we change the image data to a file path of the image
+                        imagedata = filepath
+                else:
+                    raise Exception
+            #now we pack info into dataframe
+            data = data.append({'channel'      : msg.channel,
+                                'sender'       : msg.author.name,
+                                'time'         : msg.created_at,
+                                'content'      : msg.content,
+                                'file'         : imagedata},
+                                ignore_index = True)
+            #perform data output
+            msghandler.savemessageinloop(message= message)
+        #stop at message limit
+        if len(data) == limit:
+            break
+
+class DatabasePacker(DiscordScrape):
     def __init__(self):#,channel,server):
         #self.channel = channel
         #self.server = server
         self.filterfield = ""
         self.filterstring = ""
 
-    def channelscrapetodb(self,dataframe:pandas.DataFrame):#,thing_to_get):
+
+    def packframetodb(self,dataframe:pandas.DataFrame):#,thing_to_get):
         try:
             #inside the door for the entrypoint for data
-            dataframe.columns = ['channel','time','sender','content','file']
             # defaults to discarding empties... there are no empties
             if dataframe[self.filterfield] == self.filterstring:
                 warning_message("[-] PANDAS - input : {} : discarded from rows".format(dataframe[self.filterstring]))
-            else :                          #sender of message
+            else :
                 messagesent = DiscordMessage(channel = dataframe['channel'],
                                             time = dataframe['time'],
                                             sender = dataframe['sender'],
@@ -63,5 +107,3 @@ class DatabasePacker():
         except Exception:
             errormessage("[-] DatabasePacker() FAILED")
 
-
-greenprint("[+] Loaded Discord commands")
