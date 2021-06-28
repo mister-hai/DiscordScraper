@@ -32,8 +32,8 @@ Discord bot message archival
 """
 import pandas
 
-from util import redprint,blueprint,greenprint,warning_message,errormessage
-from database import DiscordMsgDB,DiscordMessage,addmsgtodb
+from src.util import redprint,blueprint,greenprint,warning_message,errormessage
+from src.database import DiscordMsgDB,DiscordMessage,addmsgtodb
 ###############################################################################
 #                CHANNEL SCRAPING CLASS
 ###############################################################################

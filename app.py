@@ -113,6 +113,9 @@ global today
 today = date.today()
 timeofrun = datetime.now
 
+#setting defaults for use without argparse
+imagesaveformat = ".png"
+
 fileextensionfilter = [".jpg",".png",".gif"]
 listofpandascolumns = ['channel', 'sender', 'time', 'content','file']
 domainlist = ['discordapp.com', 'discord.com', "discordapp.net"]
@@ -232,7 +235,6 @@ async def scrapemessages(message,limit):
 
             #if they want a CSV file of the message contents
             if SAVETOCSV == True:
-                imagesaveformat = ".png"
                 imagedirectory = os.getcwd() + "/images/"
                 messagedirectory = os.getcwd() +"/messages/"
                 directory_listing = scanfilesbyextension(imagedirectory,arguments.imagesaveformat)
@@ -276,11 +278,6 @@ async def scrapemessages(message,limit):
         else:
             return False
 
-    def filterattachment(self,attachment,urlfilter = domainlist):
-        if (attachment.url != None):
-            if (attachment.filename.endswith(".jpg" or ".png" or ".gif")):
-                if (self.checkurlagainstdomain(attachment.url, urlfilter)):
-                    return True
 
     def filtermessage(message):
         '''logic for allowing the copntrol flow to continue'''
@@ -313,50 +310,48 @@ async def scrapemessages(message,limit):
 ###############################################################################
 #                MAIN CONTROL FLOW
 ###############################################################################
-try:
-    if __name__ == '__main__':
-        try:
+
+if __name__ == '__main__':
+    try:
 ###############################################################################
-            #check for database file
-            if os.path.exists(arguments.dbname) == False:
-                #if its not there, make file
-                DiscordMsgDB.create_all()
-                DiscordMsgDB.session.commit()
-                info_message("[+] Database Tables Created")
-                #test database entry mechanics
-                try:
-                    test_msg = DiscordMessage(sender = 'sender',
-                                    time = 'time',
-                                    content = 'content',
-                                    file = 'file location, relative'
-                                    )
-                    addmsgtodb(test_msg)
-                    info_message("[+] Test Commit SUCESSFUL, Continuing!\n")
-                except Exception:
-                    errormessage("[-] Test Commit FAILED \n") 
-###############################################################################
-                # IMPORTANT!!!
-                #database file already exists!
-                #backup this db file, ONLY the file.db!!
-                ## ADD IMAGES TO ARCHIVE IN FOLDER
-            elif os.path.exists(arguments.dbname) == True:
-                greenprint("[+] Database File Exists!")
-                #check for tables
-                for each in listofpandascolumns:
-                    if table_exists(each):
-                        warning_message('[+] Table : {} verified'.format(each))
-                    else:
-                        raise Exception
-###############################################################################                        
-            #perform the actual activity requested by the user
+        #check for database file
+        if os.path.exists(arguments.dbname) == False:
+            #if its not there, make file
+            DiscordMsgDB.create_all()
+            DiscordMsgDB.session.commit()
+            info_message("[+] Database Tables Created")
+            #test database entry mechanics
             try:
-                #start the bot
-                bot.run(discord_bot_token, bot=True)
+                test_msg = DiscordMessage(sender = 'sender',
+                                time = 'time',
+                                content = 'content',
+                                file = 'file location, relative'
+                                )
+                addmsgtodb(test_msg)
+                info_message("[+] Test Commit SUCESSFUL, Continuing!\n")
             except Exception:
-                errormessage("[-] BOT OPERATION FAILED!!! \n")
+                errormessage("[-] Test Commit FAILED \n") 
 ###############################################################################
+            # IMPORTANT!!!
+            #database file already exists!
+            #backup this db file, ONLY the file.db!!
+            ## ADD IMAGES TO ARCHIVE IN FOLDER
+        elif os.path.exists(arguments.dbname) == True:
+            greenprint("[+] Database File Exists!")
+            #check for tables
+            for each in listofpandascolumns:
+                if table_exists(each):
+                    warning_message('[+] Table : {} verified'.format(each))
+                else:
+                    raise Exception
+###############################################################################                        
+        #perform the actual activity requested by the user
+        try:
+            #start the bot
+            bot.run(discord_bot_token, bot=True)
         except Exception:
-            errormessage("[-] Database existence Check FAILED")
-except:
-    redprint("[-] Error starting program")
+            errormessage("[-] BOT OPERATION FAILED!!! \n")
+###############################################################################
+    except Exception:
+        redprint("[-] Error starting program")
 
