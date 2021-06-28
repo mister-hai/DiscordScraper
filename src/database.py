@@ -99,7 +99,7 @@ class DiscordMessage(DiscordMsgDB.Model):
     content   = DiscordMsgDB.Column(DiscordMsgDB.Text)
     #filelocation or base64
     file      = DiscordMsgDB.Column(DiscordMsgDB.Text)
-
+    originalfileurl = DiscordMsgDB.Column(DiscordMsgDB(256))
     def __repr__(self):
         return '''=========================================
 channel : {}

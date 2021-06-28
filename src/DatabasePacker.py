@@ -46,7 +46,7 @@ class DatabasePacker():
 
     def channelscrapetodb(self,dataframe:pandas.DataFrame):#,thing_to_get):
         try:
-            #entrypoint for data
+            #inside the door for the entrypoint for data
             dataframe.columns = ['channel','time','sender','content','file']
             # defaults to discarding empties... there are no empties
             if dataframe[self.filterfield] == self.filterstring:

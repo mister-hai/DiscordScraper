@@ -24,6 +24,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 ################################################################################
+#                  DOCUMENTATION
+################################################################################
+
 """
 Discord bot message archival
 """
@@ -39,6 +42,8 @@ __filestructure__ = """
 /module/
     setup.py
     app.py
+    --- IF SAVING AS SQLITE3DB ---
+    DATABASE.DB IS HERE
         /src
             __init__.py
             src1.py
@@ -61,6 +66,7 @@ __filestructure__ = """
                         img1-date-time.jpg.b64
                         img2-date-time.jpg.b64
                         img3-date-time.jpg.b64
+--- IF SAVING AS CSV ---
             /messages
                 /channel1
                     msgset1-date-time.csv
@@ -74,8 +80,14 @@ __filestructure__ = """
                     msgset1-date-time.csv
                     msgset2-date-time.csv
                     msgset3-date-time.csv
-
+--- MESSAGES ARE STORED BY CHANNEL--
+--- AND SAVED AS ONE FILE PER RUN, PER CHANNEL---
 """
+docslist = [__description__,__docs__,__credits__,__filestructure__]
+def displaydocs(docslist):
+    '''Prints out the documentation'''
+    for each in docslist:
+        print(each)
 ################################################################################
 # Imports
 ################################################################################
@@ -111,7 +123,7 @@ from src.database import table_exists
 global timeofrun
 global today
 today = date.today()
-timeofrun = datetime.now
+timeofrun = datetime.now()
 
 #setting defaults for use without argparse
 imagesaveformat = ".png"
@@ -128,9 +140,9 @@ BOT_PERMISSIONS     = 3072
 devs                = [712737412018733076]
 #cog_directory_files = os.listdir("./cogs")
 load_cogs           = False
-bot = commands.Bot(command_prefix=(COMMAND_PREFIX))
-#client = discord.Client()
 bot = discord.Bot()
+bot = commands.Bot(command_prefix=(COMMAND_PREFIX))
+client = discord.Client()
 guild = discord.Guild
 ###############################################################################
 #                        Command Line Arguments
@@ -190,25 +202,33 @@ async def on_ready():
     await bot.change_presence(activity=discord.Game(name="yo mamma say .help"))
     #await lookup_bot.connect()
 
+imagedirectory = os.getcwd() + "/images/"
 
 #function to call the scraper class when ordered
 @bot.event
 async def scrapemessages(message,limit):
     #get the input
     dbpacker = DatabasePacker()
+    msghandler= MessageHandler()
     #itterate over messages in channel until limit is reached
     for msg in message.channel.history(limit):
         # filter the messages to exlude various entities
-        if filtermessage(message=message):
+        if msghandler.filtermessage(message=message):
             # colums defined at the top
             data = pandas.DataFrame(columns=listofpandascolumns)
             #if attachment exists in message
             if len(message.attachments) > 0:
                 #process attachments to grab images
                 for attachment in message.attachments:
-                    #its a link to something and that link is an image in discords CDN
-                    if filterattachment(attachment):
-                        imagedata = grabimage(discord_bot_token,attachment.url)
+                    #its a link to something and that link is an image in 
+                    # discords CDN
+                    #TODO:
+                    # imgur
+                    # rule34
+                    # furaffinity
+                    # other furry shit
+                    if msghandler.filterattachment(attachment):
+                        imagedata = msghandler.grabimage(discord_bot_token,attachment.url)
                         # we now have either base64 image data, or binary image data
                         # save the image to specific folder, accordin to date time
                         # making a new folder if we have to.
@@ -219,7 +239,7 @@ async def scrapemessages(message,limit):
                         # if they want to save an image as a file and link to it in the database
                             #no gzip compression!
                         if arguments.saveformat == "file":
-                            filepath = savefile(imagedata, attachment.filename)
+                            filepath = msghandler.savefile(imagedata, attachment.filename)
                             #now we change the image data to a file path of the image
                             imagedata = filepath
                     else:
@@ -232,16 +252,41 @@ async def scrapemessages(message,limit):
                                 'file'         : imagedata},
                                 ignore_index = True)
             #perform data output
+            msghandler.savemessageinloop(message= message)
+        #stop at message limit
+        if len(data) == limit:
+            break
 
+class MessageHandler():
+    def __init__(self):
+        pass
+    
+    def thing(self,message):
+        # Getting the embed and converting it to a dict
+        embed = message.embeds[0]
+        embed_dict = embed.to_dict()
+
+        for field in embed_dict['fields']:
+            if field['name'] :#== user_input['field name']:
+                pass
+        
+    def checkimagesdir(self):
+        directory_listing = scanfilesbyextension(imagedirectory,arguments.imagesaveformat)
+        return directory_listing
+
+    def savemessageinloop(self,message):
             #if they want a CSV file of the message contents
             if SAVETOCSV == True:
-                imagedirectory = os.getcwd() + "/images/"
                 messagedirectory = os.getcwd() +"/messages/"
-                directory_listing = scanfilesbyextension(imagedirectory,arguments.imagesaveformat)
+                #name the directory/file according to the spec
+                messagedirectoryNOW = messagedirectory + message.channel + timeofrun
                 #file_location = arguments.dbname + str(today) # Set the string to where you want the file to be saved to
-                data.to_csv(file_location)
-                #write file to image folder under date
-                imagewat = SaveDiscordImage(imageblob)
+                data.to_csv(messagedirectoryNOW)
+            #
+            # SAVING THE MESSAGES FOR THAT RUN IN A SQLITE3DB
+            # - SINGLE FILE
+            # - NO TIME DATE STAMP
+            # - NO CHANNEL SUBDIRECTORY
             elif SAVETOCSV == False:
                 messagesent = DiscordMessage(channel = data['channel'],
                                             time     = data['time'],
@@ -250,12 +295,11 @@ async def scrapemessages(message,limit):
                                             file     = data['file'])
                 #push to DB
                 addmsgtodb(messagesent)
-                dbpacker.channelscrapetodb(data)
-        #stop at message limit
-        if len(data) == limit:
-            break
+                #dbpacker.channelscrapetodb(data)
 
-        def savefile(imagedata,filename):
+    def savefile(self,imagedata,filename):
+        '''Saves a meggage according to global configuration'''
+        try:
             databasefolder      = "/database"
             baseimagefolder     = databasefolder + "/images/"
             imagefoldernow      = baseimagefolder + timeofrun
@@ -268,9 +312,12 @@ async def scrapemessages(message,limit):
             with open(filename,'wb') as out_file:
                 shutil.copyfileobj(imagedata, out_file)
             return fullfilepath
+        except Exception:
+            errormessage("[-] ERROR Saving Image Data to disk!")
 
 
-    def checkurlagainstdomain(urltoscan,listofdomains):
+    def checkurlagainstdomain(self,urltoscan,listofdomains):
+        '''logic for allowing the control flow to continue'''
         parsedurl = urlparse(urltoscan)
         domainrequested = parsedurl.netloc.split('/')[2].split(':')[0]
         if domainrequested in listofdomains:
@@ -279,20 +326,21 @@ async def scrapemessages(message,limit):
             return False
 
 
-    def filtermessage(message):
-        '''logic for allowing the copntrol flow to continue'''
-        if msg.author != bot.user:
+    def filtermessage(self,message):
+        '''logic for allowing the control flow to continue'''
+        if message.author != bot.user:
             return True
         else:
             return False
 
-    def filterattachment(attachment,urlfilter = domainlist, extensionfilter = fileextensionfilter):
+    def filterattachment(self,attachment,urlfilter = domainlist, extensionfilter = fileextensionfilter):
+        '''logic for allowing the control flow to continue'''
         if (attachment.url != None):
             if (attachment.filename.endswith(extensionfilter)):
                 if (checkurlagainstdomain(attachment.url, urlfilter)):
                     return True
 
-    def grabimage(token,imageurl,savefilename):
+    def grabimage(self,token,imageurl,savefilename):
         try:
             imageblob = SaveDiscordImage( imageurl = imageurl,
                             token        = token,
@@ -304,8 +352,8 @@ async def scrapemessages(message,limit):
         except Exception:
             errormessage("[-] Failed To Grab Image: {}".format(imageurl))
     
-    def writetodbfolder():
-        
+    def writetodbfolder(self):
+        pass        
 
 ###############################################################################
 #                MAIN CONTROL FLOW
