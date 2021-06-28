@@ -11,7 +11,14 @@ class MessageHandler():
         for field in embed_dict['fields']:
             if field['name'] :#== user_input['field name']:
                 pass
-        
+    
+    def filterbychannel():
+        channel = client.get_channel(730839966472601622)
+        messages = await ctx.channel.history(limit=200).flatten()
+        for msg in messages:
+            if word in msg.content:
+                print(msg.jump_url)        
+
     def checkimagesdir(self):
         directory_listing = scanfilesbyextension(imagedirectory,arguments.imagesaveformat)
         return directory_listing

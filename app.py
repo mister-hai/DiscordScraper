@@ -190,6 +190,9 @@ parser.add_argument('--gzipped',
                                  help    = "will gzip as much as possible to save space")    
 arguments = parser.parse_args()
 
+# need this here, in this spot
+# mixing OOP and procedural programming paradigms
+# to allow for a more customizable "shape"
 if  arguments.saveformat == "csv":
     SAVETOCSV = True
 else:
@@ -208,7 +211,7 @@ async def on_ready():
 imagedirectory = os.getcwd() + "/images/"
 
 #function to call the scraper class when ordered
-@bot.event
+@bot.command
 async def scrapemessages(message,limit):
     #get the input
     dbpacker = DatabasePacker()
