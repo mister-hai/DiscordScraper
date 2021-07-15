@@ -19,19 +19,27 @@ goto the following website and create a bot application.
         if you want to hack this bot to make more stuff
         Set that in the config.cfg file
 
-#How to install this program:
+# How to install this program:
+
     1. Open a terminal in home directory
+
     2. run the command `curl --location --remote-header-name --remote-name https://github.com/Church-of-the-SubHackers/DiscordScraper`
+
     3. run the command `sudo chmod +x ./DiscordScraper/setup.py`
 
-#Ways to run this program:
+# Ways to run this program:
+
     1. open `~/DiscordScraper/config.cfg` in a text editor and 
         set options according to your preferences
+
     AND
        run the command `~/DiscordScraper/app.py` 
     OR
+
     2. run the command `~/DiscordScraper/app.py --token <insert_your_token_here> --AllTheOtherOptionsYouFeellLikeSetting`
+
     3. ???
+
     4. PROFIT!
 
 READ THE SOURCE TO LEARN SOMETHING
