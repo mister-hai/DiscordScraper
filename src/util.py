@@ -34,6 +34,7 @@ import sys,os
 import logging
 import pkgutil
 import inspect
+import hashlib
 import traceback
 from pathlib import Path
 from datetime import date
@@ -82,7 +83,7 @@ info_message      = lambda message: logger.info(greenprint(message))
 warning_message   = lambda message: logger.warning(yellowboldprint(message)) 
 error_message     = lambda message: logger.error(redprint(message)) 
 critical_message  = lambda message: logger.critical(yellowboldprint(message))
-
+ 
 gzcompress = lambda inputdata: {"data" : gzip.compress(inputdata)}
 
 scanfilesbyextension = lambda directory,extension: [f for f in os.listdir(directory) if f.endswith(extension)]
@@ -99,6 +100,21 @@ defaultheaders = {'User-Agent':"Mozilla/5.0 (Windows NT 10.0; WOW64) \
                    Electron/9.3.5 Safari/537.36"}
 
 greenprint("[+] Variables Set!")
+################################################################################
+##############                      Image                     #################
+################################################################################
+
+def saveimage(imageblob, filename, imagesaveformat):
+    '''saves file as png,jpg, etc'''
+    import PIL
+    greenprint("[+] Saving image as {}".format(filename))
+    try:
+        image_storage = PIL.Image.open(imageblob)
+        image_storage.save(filename, imagesaveformat)
+        image_storage.close()
+        greenprint("[+] Image Saved")
+    except:
+        errormessage("[-] Could Not Save Image with PIL")
 
 ################################################################################
 ##############                      SYSTEM                     #################
@@ -152,3 +168,22 @@ def gzipreadfiletostring(filename, metaclassforfile):
         with io.TextIOWrapper(ip, encoding='utf-8') as decoder:
             content = decoder.read()
             return content 
+
+
+def md5(bytearray:bytes):
+    ''' returns a sha512 digest of a password after salting with PBKDF'''
+    herp = hashlib.md5()
+    herp.update(bytearray)
+    return herp.digest()
+
+def sha256(bytearray:bytes,encoding =  "utf-8"):
+    ''' returns a sha256 digest of a password after salting with PBKDF'''
+    herp = hashlib.sha256()
+    herp.update(bytearray)
+    return herp.digest()
+
+def sha512(bytearray:bytes,encoding =  "utf-8"):
+    ''' returns a sha512 digest of a password after salting with PBKDF'''
+    herp = hashlib.sha512()
+    herp.update(bytearray)
+    return herp.digest()

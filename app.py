@@ -26,96 +26,27 @@
 ################################################################################
 #                  DOCUMENTATION
 ################################################################################
-
+__prog__ = """
+Discord bot Tied to Code Performing Message Archival
 """
-Discord bot message archival
-"""
-__description__ = '''Saves Discord Conversations per channel in sqlite3.db or csv.txt with images as base64.txt or png
-'''
-__docs__ = '''
-'''
-__credits__ = {"credit1":"mister_hai",
-                "credit2":"",
-                "credit3":""}
-
-__filestructure__ = """
-/module/
-    setup.py
-    app.py
-    --- IF SAVING AS SQLITE3DB ---
-    DATABASE.DB IS HERE
-        /src
-            __init__.py
-            src1.py
-            src2.py
-            src....py
-        /database
-            /images
-                /channel1
-                    /date-time
-                        img1-date-time.jpg.b64
-                        img2-date-time.jpg.b64
-                        img3-date-time.jpg.b64
-                /channel2
-                    /date-time
-                        img1-date-time.jpg.b64
-                        img2-date-time.jpg.b64
-                        img3-date-time.jpg.b64
-                /channel3
-                    /date-time
-                        img1-date-time.jpg.b64
-                        img2-date-time.jpg.b64
-                        img3-date-time.jpg.b64
---- IF SAVING AS CSV ---
-            /messages
-                /channel1
-                    msgset1-date-time.csv
-                    msgset2-date-time.csv
-                    msgset3-date-time.csv
-                /channel2
-                    msgset1-date-time.csv
-                    msgset2-date-time.csv
-                    msgset3-date-time.csv
-                /channel3
-                    msgset1-date-time.csv
-                    msgset2-date-time.csv
-                    msgset3-date-time.csv
---- MESSAGES ARE STORED BY CHANNEL--
---- AND SAVED AS ONE FILE PER RUN, PER CHANNEL---
-"""
-docslist = [__description__,__docs__,__credits__,__filestructure__]
-def displaydocs(docslist):
-    '''Prints out the documentation'''
-    for each in docslist:
-        print(each)
 ################################################################################
 # Imports
 ################################################################################
 print("[+] Starting Discord Scraping Utility")
 TESTING = True
-
-import base64
+import gzip
 import sys,os
-import pandas
-import requests
-from pathlib import Path
-import datetime
-from datetime import date
-import shutil
-###############################################################################
-from requests.auth import HTTPBasicAuth
-from urllib.parse import urlparse
-import discord
-from discord.ext import commands, tasks
-###############################################################################
-from src.DatabasePacker import DatabasePacker
-from src.HTTPRequest import HTTPDownloadRequest
-from src.SaveDiscordImage import SaveDiscordImage
-from src.database import DiscordMsgDB,DiscordMessage,addmsgtodb
+from datetime import datetime,date
+
+
+from docs import *
+from commands import *
 from src.util import redprint,blueprint,greenprint,errormessage,debugmessage
 from src.util import warn,yellowboldprint,warning_message,scanfilesbyextension
-from src.util import info_message
-from src.database import table_exists
+from src.util import info_message,gzfilewritestring,gzcompress,gzipreadfiletostring
+from src.database import table_exists,dbtest
+
+greenprint("[+] Modules Imported")
 ################################################################################
 # Variables, Technically "loose ends", the dangly bits that you connect to 
 # other code that functionally represent the ends of wires/data pipelines/etc...
@@ -124,111 +55,123 @@ global timeofrun
 global today
 today = date.today()
 timeofrun = datetime.now()
-
-#setting defaults for use without argparse
-imagesaveformat = ".png"
-
-#an example of how to craft a bullshit filter to select only items of contextual value
-fileextensionfilter = [".jpg",".png",".gif"]
-#dataframe.columns = ['channel','time','sender','content','file']
-listofpandascolumns = ['channel', 'sender', 'time', 'content','file']
-domainlist = ['discordapp.com', 'discord.com', "discordapp.net", "imgur.com"]
-porndomains = ["rule34.xxx"]
 attachmentsurl = "/attachments/"
 #filterfordiscorddomain = lambda string: for domain in string[0:26] if  # == "https://cnd.discordapp.com"
-discord_bot_token   = "NzE0NjA3NTAyOTg1MDAzMDgw.XxV-HQ.mn5f97TDYXtuFVgTwUccfsW4Guk"
-COMMAND_PREFIX      = "."
-bot_help_message    = "I AM"
-BOT_PERMISSIONS     = 3072
-devs                = [712737412018733076]
-#cog_directory_files = os.listdir("./cogs")
-load_cogs           = False
-bot = commands.Bot(command_prefix=(COMMAND_PREFIX))
-#client = discord.Client()
-guild = discord.Guild
+#token   = "NzE0NjA3NTAyOTg1MDAzMDgw.XxV-HQ.mn5f97TDYXtuFVgTwUccfsW4Guk"
+
+greenprint("[+] Global Variables Set")
 ###############################################################################
 #                        Command Line Arguments
 ###############################################################################
 import argparse
-parser = argparse.ArgumentParser(description='Discord Message Archival')
-parser.add_argument('--imagestoretype',
-                                 dest    = 'saveformat',
-                                 action  = "store" ,
-                                 default = "file", 
-                                 help    = "set if images are saved in the DB as text or externally as files, OPTIONS: 'file' OR 'base64. " )
-parser.add_argument('--messagelimit',
-                                 dest    = 'limit',
-                                 action  = "store" ,
-                                 default = "10000", 
-                                 help    = "Number of messages to download" )
-parser.add_argument('--databasename',
-                                 dest    = 'dbname',
-                                 action  = "store" ,
-                                 default = "discordmessagehistory", 
-                                 help    = "Name of the file to save the database as" )
-parser.add_argument('--databasetype',
-                                 dest    = 'dbtype',
-                                 action  = "store" ,
-                                 default = "sqlite3", 
-                                 help    = "text storage format, can be 'sqlite3' OR 'csv', This applies to base64 image data as well" )
-parser.add_argument('--imagesaveformat',
-                                 dest    = 'imagesaveformat',
-                                 action  = "store" ,
-                                 default = ".png", 
-                                 help    = "File extension for images" )
+import configparser
+
+parser = argparse.ArgumentParser(
+    prog=__prog__,
+    description='Discord Message Archival',
+    epilog="RUNNING THIS PROGRAM WITH THE --token EMPTY WILL FORCE IT TO USE THE CONFIG FILE",
+    )
+    #860037305368838164
+#parser.add_argument('--user',
+#                                 dest    = 'user',
+#                                 action  = "store" ,
+#                                 default = "860037305368838164", 
+#                                 help    = "FUTURE OPTION: discord bot USER ID for O-Auth process" )
+#parser.add_argument('--secret',
+#                                 dest    = 'user',
+#                                 action  = "store" ,
+#                                 default = "8h_n6kg29RwFBKj6IHSdjHZL67EdV6NM", 
+#                                 help    = "FUTURE OPTION: discord bot SECRET for O-Auth process" )
 parser.add_argument('--auth-token',
-                                 dest    = 'token',
-                                 action  = "store" ,
-                                 default = discord_bot_token, 
-                                 help    = "string, no quotes, of your discord bot token.\
-                                     No, this script is not going to steal it, Read the source" )
+                                dest    = 'token',
+                                action  = "store" ,
+                                default = "", 
+                                help    = "discord bot TOKEN for BASIC BOT Auth process. \n\
+        LEAVE EMPTY TO USE THE CONFIG FILE FOR ALL ARGUMENTS \n",
+                                required = False)
+parser.add_argument('--images',
+                                dest    = 'images',
+                                action  = "store_true",
+                                default = False, 
+                                help    = "set if images are saved AT ALL.\
+                                    DEFAULT IS NO IMAGES SAVED",
+                                required = False)
+parser.add_argument('--messagelimit',
+                                dest    = 'limit',
+                                action  = "store" ,
+                                default = "10000", 
+                                help    = "Number of messages to download",
+                                required = False)
+parser.add_argument('--databasename',
+                                dest    = 'dbname',
+                                action  = "store" ,
+                                default = "discordmessagehistory", 
+                                help    = "Name of the file to save the database as",
+                                required = False)
+#parser.add_argument('--pandascolumns',
+#                                dest    = 'pandascolumns',
+#                                action  = "store" ,
+#                                default = 'channel,sender,time,content,file', 
+#                                help    = "dev option: message sections to archive, do not modify\
+#                                    unless you know what you are doing",
+#                                required = False)
+#parser.add_argument('--saveascsv',
+#                                dest    = 'saveascsv',
+#                                action  = "store" ,
+#                                default = False, 
+#                                help    = "FUTURE OPTION: save messages as CSV file",
+#                                required = False)
+parser.add_argument('--imagesaveformat',
+                                dest    = 'imagesaveformat',
+                                action  = "store" ,
+                                default = ".png", 
+                                help    = "File extension for saving images",
+                                required = False)
 parser.add_argument('--gzipped',
-                                 dest    = 'gzipenabled',
-                                 action  = "store",
-                                 default = True, 
-                                 help    = "will gzip as much as possible to save space")
+                                dest    = 'gzipenabled',
+                                action  = "store",
+                                default = True, 
+                                help    = "will gzip as much as possible to save space",
+                                required = False)
+parser.add_argument('--compressionfactor',
+                                dest    = 'compressionfactor',
+                                action  = "store",
+                                default = 5, 
+                                help    = "Sets compression factor for all GZIP \
+                                    operations : integer 0-9 Default : 5",
+                                required = False)
 parser.add_argument('--docs',
-                                 dest    = 'printdocumentation',
-                                 action  = "store",
-                                 default = True, 
-                                 help    = "Prints the Documentation to the terminal, \
-                                     use './app.py --docs >> docs.txt' to save to a file") 
-arguments = parser.parse_args()
-
-# need this here, in this spot
-# mixing OOP and procedural programming paradigms
-# to allow for a more customizable "shape"
-if  arguments.saveformat == "csv":
-    SAVETOCSV = True
-else:
-    SAVETOCSV == False
-
+                                dest    = 'printdocumentation',
+                                action  = "store",
+                                default = True, 
+                                help    = "Prints the Documentation to the terminal, \
+                                    use './app.py --docs >> docs.txt' to save to a file",
+                                required = False) 
 ###############################################################################
-#                DISCORD COMMANDS
+##                     CONFIGURATION FILE PARSER                             ##
 ###############################################################################
-# WHEN STARTED, APPLY DIRECTLY TO FOREHEAD
-@bot.event
-async def on_ready():
-    print("Discrod Scraper ALPHA")
-    await bot.change_presence(activity=discord.Game(name="yo mamma say .help"))
-    #await lookup_bot.connect()
+try:
+    arguments = parser.parse_args()
+    #dataframe.columns = ['channel','time','sender','content','file']
+    #listofpandascolumns = ['channel', 'sender', 'time', 'content','file']
+    if len(arguments.token) == 0:
+        config              = configparser.ConfigParser()
+        token               = config['DEFAULT']['token']
+        dbname              = config['DEFAULT']['dbname']
+        noimages            = config['DEFAULT']['noimages']
+        gzipenabled         = config['DEFAULT']['gzipenabled']
+        compressionfactor   = config['DEFAULT']['compressionfactor']
+        domainlist          = config['DEFAULT']['domainlist'].split(",")
+        listofpandascolumns = config['DEFAULT']['pandascolumns'].split(",")
+    elif len(arguments.token) == 59:
+        if arguments.gzipenabled:
+            gzipcompressionfactor = arguments.compressionfactor
 
-imagedirectory = os.getcwd() + "/images/"
+except Exception:
+    errormessage("[-] Configuation File could not be parsed!")
+    sys.exit(1)
 
-#function to call the scraper class when ordered
-@bot.command
-async def scrapemessages(message,limit):
-    #get the input
-    dbpacker = DatabasePacker()
-    msghandler= MessageHandler()
-    #itterate over messages in channel until limit is reached
-    for msg in message.channel.history(limit):
-        # filter the messages to exlude various entities
-        if msghandler.filtermessage(message=message):
-            # colums defined at the top
-            data = pandas.DataFrame(columns=listofpandascolumns)
-
-greenprint("[+] Loaded Discord commands")
+greenprint("[+] Loaded Commandline Arguments")
 
 ###############################################################################
 #                MAIN CONTROL FLOW
@@ -237,30 +180,27 @@ greenprint("[+] Loaded Discord commands")
 if __name__ == '__main__':
     try:
 ###############################################################################
+#                TEST ON START
+###############################################################################
         #check for database file
-        if os.path.exists(arguments.dbname) == False:
-            #if its not there, make file
-            DiscordMsgDB.create_all()
-            DiscordMsgDB.session.commit()
-            info_message("[+] Database Tables Created")
-            #test database entry mechanics
-            try:
-                test_msg = DiscordMessage(sender = 'sender',
-                                time = 'time',
-                                content = 'content',
-                                file = 'file location, relative'
-                                )
-                addmsgtodb(test_msg)
-                info_message("[+] Test Commit SUCESSFUL, Continuing!\n")
-            except Exception:
-                errormessage("[-] Test Commit FAILED \n") 
+        
+        greenprint("[+] Testing Database")
+        if os.path.exists(dbname) == False:
+            dbtest()
+###############################################################################
+#        DO THE THING JULIE! THE THING! DO IT!
 ###############################################################################
             # IMPORTANT!!!
-            #database file already exists!
-            #backup this db file, ONLY the file.db!!
-            ## ADD IMAGES TO ARCHIVE IN FOLDER
-        elif os.path.exists(arguments.dbname) == True:
+            # IF database file already exists!
+            # backup this db file, ONLY the file.db!!
+            #   to an archive in BOTH this folder at the TLD, and the ~/DESKTOP/data.db~!
+            ## ADD IMAGES TO ARCHIVE IN /images/ FOLDER
+        elif os.path.exists(dbname) == True:
             greenprint("[+] Database File Exists!")
+            yellowboldprint("[+] backing up db file before performing an operation on it!")
+            # int 0-9
+            with open(dbname) as databasefile:
+                gzip.compress(databasefile,compresslevel=compressionfactor)
             #check for tables
             for each in listofpandascolumns:
                 if table_exists(each):
@@ -270,8 +210,7 @@ if __name__ == '__main__':
 ###############################################################################                        
         #perform the actual activity requested by the user
         try:
-            #start the bot
-            bot.run(discord_bot_token, bot=True)
+            bot.run(token, bot=True)
         except Exception:
             errormessage("[-] BOT OPERATION FAILED!!! \n")
 ###############################################################################

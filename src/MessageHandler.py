@@ -24,71 +24,45 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+from requests.auth import HTTPBasicAuth
+from urllib.parse import urlparse
+import discord
+import re
+from discord.ext import commands, tasks
+
+
 class MessageHandler():
-    def __init__(self):
+    ''' '''
+    def __init__(self, domainlist):
+        #self.domainfilterlist = domainlist
+        self.domainregex    = [r"(https://cdn\.discordapp\.com)",r"(https://rule34\.xxx)",
+                                 r"(https://i\.redd\.it/)",r"(https://imgur.com/)",
+                                 r"media.discordapp.net"
+                            ]
+        self.extensionregex = [r"(\.jpg)",r"(\.png)",r"(\.gif)",r"(\.mp4)",
+                               r"(\.avi)", r"(\.jpeg)",r"(\.webm)"
+                            ]
+        self.goodreggie = r'''(https?:)?\/\/?[^\'"<>]+?\.(jpg|jpeg|gif|png|mp4|webm)'''
+        self.regexforimage = re.compile(self.goodreggie)
+
+    def deletemessageifmatch(self,message:discord.Message):
         pass
-    
-    def thing(self,message):
-        # Getting the embed and converting it to a dict
-        embed = message.embeds[0]
-        embed_dict = embed.to_dict()
 
-        for field in embed_dict['fields']:
-            if field['name'] :#== user_input['field name']:
-                pass
-    
-    def filterbychannel(message):
-        #channel = client.get_channel(730839966472601622)
-        messages = channel.history(limit=200).flatten()
-        for msg in messages:
-            if word in msg.content:
-                print(msg.jump_url)        
-
-    def checkimagesdir(self):
-        directory_listing = scanfilesbyextension(imagedirectory,arguments.imagesaveformat)
-        return directory_listing
-
-    def savemessageinloop(self,message):
-            #if they want a CSV file of the message contents
-            if SAVETOCSV == True:
-                messagedirectory = os.getcwd() +"/messages/"
-                #name the directory/file according to the spec
-                messagedirectoryNOW = messagedirectory + message.channel + timeofrun
-                #file_location = arguments.dbname + str(today) # Set the string to where you want the file to be saved to
-                data.to_csv(messagedirectoryNOW)
-            #
-            # SAVING THE MESSAGES FOR THAT RUN IN A SQLITE3DB
-            # - SINGLE FILE
-            # - NO TIME DATE STAMP
-            # - NO CHANNEL SUBDIRECTORY
-            elif SAVETOCSV == False:
-                messagesent = DiscordMessage(channel = data['channel'],
-                                            time     = data['time'],
-                                            sender   = data['sender'],
-                                            content  = data['content'],
-                                            file     = data['file'])
-                #push to DB
-                addmsgtodb(messagesent)
-                #dbpacker.channelscrapetodb(data)
-
-    def savefile(self,imagedata,filename):
-        '''Saves a meggage according to global configuration'''
-        try:
-            databasefolder      = "/database"
-            baseimagefolder     = databasefolder + "/images/"
-            imagefoldernow      = baseimagefolder + timeofrun
-            # add the time and sender/messageID to name
-            # just in case of data loss
-            fullfilepath = imagefoldernow + "/" + filename + str(datetime.now()) + "_" + msg.author
-            #craft the path with folder information
-            if os.path.isdir(imagefoldernow) == False:
-                os.makedirs(imagefoldernow, exist_ok=True)
-            with open(filename,'wb') as out_file:
-                shutil.copyfileobj(imagedata, out_file)
-            return fullfilepath
-        except Exception:
-            errormessage("[-] ERROR Saving Image Data to disk!")
-
+    def scanforurlinmessage(self,msgcontent:str)->list:
+        # if it has multiple image links , return 
+        'filters out images from undesired sources, needs a regex that matches to end of extension'
+        output = []
+        # delimiters are spaces between words, and newlines
+        splitbylines = msgcontent.split("\n")
+        for lineoftext in splitbylines:
+            # check for domains and extensions
+            #for regex in self.list_o_reggies:
+                if re.match(pattern = self.goodreggie, string = lineoftext):
+                    output.append(lineoftext)
+        if len(output) > 0:
+            return output
+        else:
+            return False
 
     def checkurlagainstdomain(self,urltoscan,listofdomains):
         '''logic for allowing the control flow to continue'''
@@ -99,32 +73,12 @@ class MessageHandler():
         else:
             return False
 
-
-    def filtermessage(self,message):
-        '''logic for allowing the control flow to continue'''
-        if message.author != bot.user:
-            return True
-        else:
-            return False
-
-    def filterattachment(self,attachment,urlfilter = domainlist, extensionfilter = fileextensionfilter):
+    def filterattachment(self,
+                         attachment:discord.Attachment,
+                         urlfilter:list,
+                         extensionfilter:list):
         '''logic for allowing the control flow to continue'''
         if (attachment.url != None):
             if (attachment.filename.endswith(extensionfilter)):
-                if (checkurlagainstdomain(attachment.url, urlfilter)):
+                if (self.checkurlagainstdomain(attachment.url, urlfilter)):
                     return True
-
-    def grabimage(self,token,imageurl,savefilename):
-        try:
-            imageblob = SaveDiscordImage( imageurl = imageurl,
-                            token        = token,
-                            base64orfile = arguments.saveformat,
-                            filename     = savefilename,
-                            imagesaveformat = arguments.imagesaveformat
-                            )
-            return imageblob
-        except Exception:
-            errormessage("[-] Failed To Grab Image: {}".format(imageurl))
-    
-    def writetodbfolder(self):
-        pass        

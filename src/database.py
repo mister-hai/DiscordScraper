@@ -33,10 +33,10 @@ import sys,os
 import inspect
 import traceback
 from datetime import date
-
+import pandas
 
 ###############################################################################
-#                Flask Server / Flask Routes / User Interface
+# alex <3          Flask Server / Flask Routes / User Interface  <3 alex
 ###############################################################################
 #from sqlalchemy import inspect
 
@@ -97,9 +97,11 @@ class DiscordMessage(DiscordMsgDB.Model):
     time      = DiscordMsgDB.Column(DiscordMsgDB.String(64))
     sender    = DiscordMsgDB.Column(DiscordMsgDB.string(64))
     content   = DiscordMsgDB.Column(DiscordMsgDB.Text)
+    contentmd5= DiscordMsgDB.Column(DiscordMsgDB.String(24))
     #filelocation or base64
     file      = DiscordMsgDB.Column(DiscordMsgDB.Text)
-    originalfileurl = DiscordMsgDB.Column(DiscordMsgDB(256))
+    filemd5   = DiscordMsgDB.Column(DiscordMsgDB.String(24))
+    #originalfileurl = DiscordMsgDB.Column(DiscordMsgDB(256))
     def __repr__(self):
         return '''=========================================
 channel : {}
@@ -198,3 +200,20 @@ def table_exists(name):
         return False
 
 greenprint("[+] Database functions loaded!")
+
+def dbtest():
+    #if its not there, make file
+    DiscordMsgDB.create_all()
+    DiscordMsgDB.session.commit()
+    info_message("[+] Database Tables Created")
+    #test database entry mechanics
+    try:
+        test_msg = DiscordMessage(sender = 'sender',
+                        time = 'time',
+                        content = 'content',
+                        file = 'file location, relative'
+                        )
+        addmsgtodb(test_msg)
+        info_message("[+] Test Commit SUCESSFUL, Continuing!\n")
+    except Exception:
+        errormessage("[-] Test Commit FAILED \n") 

@@ -30,7 +30,7 @@ Discord bot message archival
 
 """
 TESTING = True
-import sys,os
+import sys,os,re
 import requests
 from time import sleep
 from io import BytesIO
@@ -38,28 +38,32 @@ from pathlib import Path
 
 from urllib.parse import urlparse
 from requests.utils import requote_uri
-
+from requests.auth import HTTPBasicAuth
 
 from src.util import redprint,blueprint,greenprint,errormessage,debugmessage
 from src.util import warn,yellowboldprint,defaultheaders,makered,domainlist
 
 
 class HTTPDownloadRequest():
-    '''refactoring to be generic, was based on discord, DEFAULTS TO DISCORD AUTHSTRING'''
-    def __init__(self,headers:dict,url:str,username,token = ""):
+    '''refactoring to be generic, was based on discord'''
+    def __init__(self,headers:dict,url:str):#,username,token = ""):
         self.requesturl = url
+        #self.token = token
         if len(self.headers) > 0:
             self.headers = defaultheaders
         else:
             self.setHeaders(headers)
 
     def makerequest(self):
+        '''call this after you call the class'''
         try:
             # perform the http request
             self.sendRequest(self.requesturl)
             #check to see if there is data
             if self.response == None:
                 raise Exception
+            else:
+                return self.response
 
         except Exception:
             errormessage("[-] Error in HTTPDownloadRequest(), ")
@@ -80,7 +84,7 @@ class HTTPDownloadRequest():
 
     def sendRequest(self, url):
         '''first this is called'''
-        self.response = requests.get(url, headers=self.headers)
+        self.response = requests.get(url, headers=self.headers)#,auth=HTTPBasicAuth(username="",password=self.token))
         if TESTING == True:
             for header in self.response.headers:
                 if header[0] == 'Retry-After':
@@ -92,17 +96,10 @@ class HTTPDownloadRequest():
                 return self.response
             #run this function again if we hit a redirect page.
             elif 299 < self.response.status_code < 400:
-                # Grab the URL that we're redirecting to.
-                redirecturl = self.response.header('Location')
-                newdomain = redirecturl.split('/')[2].split(':')[0]
-                # If the domain is a part of Discord then re-run this function.
-                if newdomain in domainlist:
-                    self.sendRequest(redirecturl)
-                # Throw a warning message to acknowledge an untrusted redirect.
-                warn('[+] Ignored unsafe redirect to {}.'.format(redirecturl))
+                self.handleredirect()
             # Otherwise throw a warning message to acknowledge a failed connection.
             else: 
-                warn('HTTP {} from {}. Image Download Failed'.format(self.response.status_code, redirecturl))
+                warn('HTTP {} from {}. Image Download Failed'.format(self.response.status_code, self.redirecturl))
 
             # if we need to retry
             # Handle HTTP 429 Too Many Requests
@@ -118,6 +115,20 @@ class HTTPDownloadRequest():
         '''and this is sent if we need to retry'''
         self.sendRequest(url)
 
+    def handleredirect(self):
+        # Grab the URL that we're redirecting to.
+        self.redirecturl = self.response.header('Location')
+        nextdomain = self.redirecturl.split('/')[2].split(':')[0]
+        # If the domain is a part of Discord then re-run this function.
+        if nextdomain in domainlist:
+            debugmessage("[+] REDIRECT to : {}".format(self.redirecturl))
+            self.sendRequest(self.redirecturl)
+        else:
+            # Throw a warning message to acknowledge an untrusted redirect.
+            warn('[+] Ignored unsafe redirect to {}.'.format(self.redirecturl))
+            pass
+
+    
     def was_there_was_an_error(self, responsecode):
         ''' Basic prechecking before more advanced filtering of output
 Returns False if no error

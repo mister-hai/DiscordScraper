@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-#!/usr/bin/env python
 ################################################################################
 ## Message Scraper for discord archival                                       ##
 ################################################################################
@@ -26,44 +25,38 @@
 # THE SOFTWARE.
 ################################################################################
 """
-Discord bot message archival
-    --saveformat sets the defaults save format
-
+Converts an image to base 64 and saves it if desired
 """
-from distutils.core import setup
 
-LONG_DESCRIPTION = '''
-Discord Scraping Utility I made to save important conversations
-'''        
-    
-setup(name = 'Discrod Scraper',
-        version = '0.1',
-        description = 'Used to save messages and pictures, \
-            will use either a SQLite3DB or CSV files while saving \
-            images as either base64 or by indexed paths to a local folder',
-        long_description = LONG_DESCRIPTION,
-        author = 'bitches stealing shit',
-        author_email = 'mrhai_gmail.fuckyourself',
-        url = 'https://github.com/mister-hai/',
-        packages = ['Dick-to-lib'],
-        classifiers = [
-          'Topic :: Security :: Cryptography',
-          'License :: OSI Approved :: WATtm License',
-        ],
-        dependency_links=[
-          'http://github.com/user/repo/tarball/master#egg=package-1.0'
-        ],
-        install_requires=[
-          'flask',
-          'flask-sqlalchemy',
-          'numpy',
-          'validators',
-          'discord',
-          'requests',
-          'pandas',
-          'shutil',
-          '',
-          ''
-        ],
-        license = "License :: OSI Approved :: WATtm License",
-    )
+import PIL
+import base64
+import sys,os
+from io import BytesIO
+from src.util import redprint,blueprint,greenprint,warning_message,errormessage
+###############################################################################
+#                IMAGE SAVING CLASS
+###############################################################################
+class ImageToBase64():
+    '''specifically for the operation of:
+    - converting image data to base64
+    - saving images
+if image name is empty, makes a random 12 ints
+'''
+    def __init__(self,imagebytes:bytes,imagesaveformat:str)-> None:
+        #DOWNLOAD THE IMAGE
+        self.imagein = imagebytes
+        self.imageout = bytes
+        self.imagesaveformat = imagesaveformat
+        #they want to return a text blob
+        self.converttobase64(imagebytes = self.imagein)
+        self.imagedata()
+
+    def converttobase64(self, imagebytes):
+        buff = BytesIO()
+        imagebytes.save(buff, format=self.imagesaveformat)
+        self.image_storage = base64.b64encode(buff.getvalue())
+        #self.image_storage = self.encode_image_to_base64(self.image_storage)
+
+    def imagedata(self):
+        '''returns base64 encoded text'''
+        return self.image_storage
