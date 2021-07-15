@@ -103,10 +103,10 @@ class DiscordScrape():
                  dbpacker : DatabasePacker,
                  current_channel:str,
                  imagesaveformat:str,
-                 noimages:bool):
+                 images:bool):
         self.authtoken = token
         self.username = username
-        self.noimages = noimages
+        self.images = images
         self.imgsavefmt = imagesaveformat
         self.handler = msghandler
         self.dbpacker = dbpacker
@@ -125,7 +125,7 @@ class DiscordScrape():
         #self.dataframe = dataframe
 
     def processmessageinloop(self,message:discord.Message):
-        if self.noimages == False:
+        if self.images == True:
             #set the image save location in case of images in the message
             self.imagefolderNOW = self.baseimagefolder +"/"+ self.channel +"/"+ self.timeofrun +"/"
             self.msgtimesent = message.created_at
@@ -135,7 +135,7 @@ class DiscordScrape():
                 self.processmessageforimages(message)
         # skip the entire previous block 
         # if user requested no images to be saved
-        elif self.noimages == True:
+        elif self.images == False:
             pass
         ############ pack dataframe ########################
         self.dbpacker.dataframe['channel'] = message.channel
@@ -221,7 +221,7 @@ class DiscordScrape():
             self.thereisanimage == True
             for attachment in attachments:
                 #domainlist = ['discordapp.com', 'discord.com', "discordapp.net", "imgur.com","rule34.xxx","i.redd.it"]
-                if self.handler.filterattachment(domainlist ,attachment):
+                if self.handler.filterattachment(self.domainlist ,attachment):
                     #get raw image data and assign to self for next step
                     self.rawimagedatadict[attachment.filename] = self.grabimage(imageurl = attachment.url)
                 else:

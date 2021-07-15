@@ -65,7 +65,7 @@ async def scrapemessages(ctx,limit = 10000):
                                     dbpacker = dbpacker,
                                     msghandler = msghandler,
                                     imagesaveformat = imagesaveformat,
-                                    noimages = noimages
+                                    images = images
                                     )
     #itterate over messages in channel until limit is reached
     for msg in current_channel.history(limit):

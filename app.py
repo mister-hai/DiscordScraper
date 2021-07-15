@@ -152,31 +152,35 @@ parser.add_argument('--docs',
 ###############################################################################
 try:
     arguments = parser.parse_args()
-    #dataframe.columns = ['channel','time','sender','content','file']
-    #listofpandascolumns = ['channel', 'sender', 'time', 'content','file']
     if len(arguments.token) == 0:
-        config              = configparser.ConfigParser()
-        token               = config['DEFAULT']['token']
-        dbname              = config['DEFAULT']['dbname']
-        noimages            = config['DEFAULT']['noimages']
-        gzipenabled         = config['DEFAULT']['gzipenabled']
-        compressionfactor   = config['DEFAULT']['compressionfactor']
-        domainlist          = config['DEFAULT']['domainlist'].split(",")
-        listofpandascolumns = config['DEFAULT']['pandascolumns'].split(",")
+        try:
+            config              = configparser.ConfigParser()
+            token               = config['DEFAULT']['token']
+            dbname              = config['DEFAULT']['dbname']
+            images              = config['DEFAULT']['images']
+            gzipenabled         = config['DEFAULT']['gzipenabled']
+            compressionfactor   = config['DEFAULT']['compressionfactor']
+            domainlist          = config['DEFAULT']['domainlist'].split(",")
+            listofpandascolumns = config['DEFAULT']['pandascolumns'].split(",")
+        except Exception:
+            errormessage("[-] Configuation File could not be parsed!")
+            sys.exit(1)
     elif len(arguments.token) == 59:
         if arguments.gzipenabled:
             gzipcompressionfactor = arguments.compressionfactor
-
+        token = arguments.token
+        dbname = arguments.dbname
+        images = arguments.images
+        domainlist = arguments.domainlist.split(",")
+        listofpandascolumns = arguments.listofpandascolumns.split(',')
 except Exception:
-    errormessage("[-] Configuation File could not be parsed!")
+    errormessage("[-] CommandLine Arguments Could Not Be Parsed!")
     sys.exit(1)
-
 greenprint("[+] Loaded Commandline Arguments")
 
 ###############################################################################
 #                MAIN CONTROL FLOW
 ###############################################################################
-
 if __name__ == '__main__':
     try:
 ###############################################################################

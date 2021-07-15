@@ -43,12 +43,12 @@ setup(name = 'Discrod Scraper',
             images as either base64 or by indexed paths to a local folder',
         long_description = LONG_DESCRIPTION,
         author = 'bitches stealing shit',
-        author_email = 'mrhai_gmail.fuckyourself',
+        author_email = 'mrha@haiwatwho?',
         url = 'https://github.com/mister-hai/',
         packages = ['Dick-to-lib'],
         classifiers = [
-          'Topic :: Security :: Cryptography',
-          'License :: OSI Approved :: WATtm License',
+          'Topic :: Social :: Media',
+          'License :: OSI operations are to be kept a secret!:: GPLv3 License',
         ],
         dependency_links=[
           'http://github.com/user/repo/tarball/master#egg=package-1.0'
@@ -57,13 +57,13 @@ setup(name = 'Discrod Scraper',
           'flask',
           'flask-sqlalchemy',
           'numpy',
-          'validators',
           'discord',
           'requests',
           'pandas',
           'shutil',
-          '',
-          ''
+          'PIL',
+          'base64',
+          'gzip'
         ],
         license = "License :: OSI Approved :: WATtm License",
     )
