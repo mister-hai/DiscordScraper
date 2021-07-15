@@ -81,35 +81,35 @@ File Structure of the Module is the following:
     
     
     /module/
-        setup.py
-        app.py
-        config.cfg
-        --- IF SAVING AS SQLITE3DB ---
-        DATABASE.DB IS HERE
-            /src
-            # these are the program files
-            # dont mess with these
-                __init__.py
-                src1.py
-                src2.py
-                src....py
-            /database
-                /images
-                    /channel1
-                        /date-time
-                            img1-date-time.jpg.b64
-                            img2-date-time.jpg.b64
-                            img3-date-time.jpg.b64
-                    /channel2
-                        /date-time
-                            img1-date-time.jpg.b64
-                            img2-date-time.jpg.b64
-                            img3-date-time.jpg.b64
-                    /channel3
-                        /date-time
-                            img1-date-time.jpg.b64
-                            img2-date-time.jpg.b64
-                            img3-date-time.jpg.b64
+    │   ├──setup.py
+    │   ├──app.py
+    │   ├──config.cfg
+--- IF SAVING AS SQLITE3DB ---
+    │   ├──DATABASE.DB IS HERE
+    │   ├── /src
+    │   │   │ --- these are the program files ---
+    │   │   │ --- dont mess with these --- 
+    │   │   ├── __init__.py
+    │   │   ├── src1.py
+    │   │   ├── src2.py
+    │   │   └── src....py
+    │   └── /database
+            └── /images
+                ├── /channel1
+                │   └── /date-time
+                │       ├── img1-date-time.jpg.b64
+                │       ├── img2-date-time.jpg.b64
+                │       └── img3-date-time.jpg.b64
+                ├── /channel2
+                │  └──/date-time
+                │       ├── img1-date-time.jpg.b64
+                │       ├── img2-date-time.jpg.b64
+                │       └── img3-date-time.jpg.b64
+                └── /channel3
+                    ├── /date-time
+                        ├── img1-date-time.jpg.b64
+                        ├── img2-date-time.jpg.b64
+                        ├── img3-date-time.jpg.b64
     --- IF SAVING AS CSV ---
     CSV CURRENTLY REMOVED FOR VERSION 1 RELEASE
                 /messages
