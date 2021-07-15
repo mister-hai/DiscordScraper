@@ -84,8 +84,8 @@ File Structure of the Module is the following:
     │   ├──setup.py
     │   ├──app.py
     │   ├──config.cfg
---- IF SAVING AS SQLITE3DB ---
-    │   ├──DATABASE.DB IS HERE
+    │   │   --- IF SAVING AS SQLITE3DB ---
+    │   ├──DATABASE.DB 
     │   ├── /src
     │   │   │ --- these are the program files ---
     │   │   │ --- dont mess with these --- 
