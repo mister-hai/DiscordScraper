@@ -27,15 +27,15 @@
 ################################################################################
 """
 Discord bot message archival
-    --saveformat sets the defaults save format
-
 """
 from distutils.core import setup
+readmefile = "README.MD"
+with open(readmefile, 'r') as f:
+    long_description = f.read()
 
 LONG_DESCRIPTION = '''
 Discord Scraping Utility I made to save important conversations
-'''        
-    
+'''
 setup(name = 'Discrod Scraper',
         version = '0.1',
         description = 'Used to save messages and pictures, \
